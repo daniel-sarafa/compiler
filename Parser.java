@@ -76,7 +76,7 @@ public class Parser
     private void statementList()
     {
         while ( currentToken.getType() == Token.ID || currentToken.getType() == Token.READ || 
-                    currentToken.getType() == Token.WRITE)
+                    currentToken.getType() == Token.WRITE || currentToken.getType() == Token.WRITESTRING)
         {
             statement();
         }
@@ -86,17 +86,29 @@ public class Parser
     {
         Expression lValue;
         Expression expr;
-        
+        StringExpression strExpr;
         switch ( currentToken.getType() )
         {
-            case Token.ID:
+            case Token.ASSIGNMENT :
             {
                 lValue = varName();
                 match( Token.ASSIGNOP );
-                expr = expression();
-                codeFactory.generateAssignment( lValue, expr );
+                if(currentToken.getType() == 18){
+                	match(Token.QUOTATION);
+                	strExpr = stringExpression();
+                	match(Token.QUOTATION);
+                	codeFactory.generateStringAssignment(lValue, strExpr);
+                }
+                else {
+	                expr = expression();
+	                codeFactory.generateIntegerAssignment( lValue, expr );
+                }
                 match( Token.SEMICOLON );
                 break;
+            }
+            case Token.DECLARATION : {
+            	lValue = varName();
+            	match(Token.SEMICOLON);
             }
             case Token.READ :
             {
@@ -129,7 +141,9 @@ public class Parser
         }
     }
     
-    private void stringlist() {
+    
+
+	private void stringlist() {
 		// TODO Auto-generated method stub
 		
 	}
@@ -178,7 +192,37 @@ public class Parser
         return result;
     }
     
-    private Expression primary()
+    private StringExpression stringExpression() {
+    	StringExpression result;
+    	StringExpression leftOperand;
+    	StringExpression rightOperand;
+    	result = stringPrimary();
+    	while(currentToken.getType() == Token.PLUS) {
+    		leftOperand = result;
+    		rightOperand = stringPrimary();
+    		result = codeFactory.generateStringExpr(leftOperand, rightOperand);
+    	}
+    	return result;
+	}
+    
+    
+    private StringExpression stringPrimary() {
+    	StringExpression result = new StringExpression();
+    	switch(currentToken.getType()){
+	    	case Token.QUOTATION : {
+	    		match(Token.QUOTATION);
+	    		result = stringExpression();
+	    		match(Token.QUOTATION);
+	    	}
+	    	case Token.ID : {
+	    		result = (StringExpression)varName();
+	    	}
+    	}
+    	
+    	return result;
+	}
+
+	private Expression primary()
     {
         Expression result = new Expression();
         switch ( currentToken.getType() )

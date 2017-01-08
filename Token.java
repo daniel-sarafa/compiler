@@ -23,6 +23,7 @@ public class Token
     public final static int DECLARATION = 16;
     public final static int ASSIGNMENT = 17;
     public final static int QUOTATION = 18;
+    //one for string?
     
     public Token( String tokenString, int tokenType)
     {
