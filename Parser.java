@@ -1,29 +1,27 @@
+/*
+ * 
+ * Micro grammar
+<program>    -> #Start BEGIN <statement list> END
+<statement list> -> <statement> {<statement>}
+<statement>    -> int <ident>; | int <ident> := <expression>  | String <ident>; | String <ident> := <stringExpression>
+<statement>    -> <ident> := <expression> | <ident> := <stringExpression> #Assign;
+<statement>    -> READ (<id list>);
+<statement>    -> WRITE (<expr list>);
+<statement>    -> WRITE(<string list>);
+<id list>    -> <ident> #ReadId {, <ident> #ReadId}
+<expr list>    -> <expression> #WriteExpr {, <expression> #WriteExpr}
+<string list>      -> <string> {, <string> }
+<expression>    -> <primary> {<add op> <primary> #GenInfix};
+<stringExpression>     ->  <stringPrimary> {+ <stringPrimary> #GenInFix};
+<primary>    -> ( <expression> )
+<primary>    -> <ident>
+<stringPrimary>->  <ident>
+<primary>    -> IntLiteral
+<stringPrimary>->StringLiteral
+<add op>    -> + #ProcessOp | - #ProcessOp
+<ident>    ->  a-z {a-z | 0-9 | specialCharacters} #ProcessId
+<system goal> -> <program> EofSym #Finish
 
-/* PROGRAM Micro */
-
-/* 	Java version of the Micro compiler from Chapter 2 of "Crafting a Compiler" --
-*	for distribution to instructors 
-*	Converted to Java by James Kiper in July 2003.
-*
-*/
-
-/* Micro grammar
-   <program>	    -> #Start BEGIN <statement list> END
-   <statement list> -> <statement> {<statement>}
-   <statement>	    -> <ident> := <expression> #Assign ;
-   <statement>	    -> READ ( <id list> ) ;
-   <statement>	    -> WRITE ( <expr list> ) ;
-   <id list>	    -> <ident> #ReadId {, <ident> #ReadId }
-   <expr list>	    -> <expression> #WriteExpr {, <expression> #WriteExpr}
-   <expression>	    -> <primary> {<add op> <primary> #GenInfix}
-   <primary>	    -> ( <expression> )
-   <primary>	    -> <ident>
-   <primary>	    -> IntLiteral #ProcessLiteral
-   <primary>	    -> MinusOp #ProcessNegative IntLiteral #ProcessLiteral
-   <add op>	    	-> PlusOp #ProcessOp
-   <add op>	    	-> MinusOp #ProcessOp
-   <ident>	    	-> Id #ProcessId
-   <system goal>    -> <program> EofSym #Finish
  */
 
 
@@ -46,7 +44,7 @@ public class Parser
     {
         Parser parser = new Parser();
       //  scanner = new Scanner( args[0]);
-        scanner = new Scanner( "test");
+        scanner = new Scanner("test.txt");
         codeFactory = new CodeFactory();
         symbolTable = new SymbolTable();
         parser.parse();
@@ -86,15 +84,52 @@ public class Parser
     {
         Expression lValue;
         Expression expr;
+        StringExpression stringLeftVal;
+        StringExpression stringExpr;
         
         switch ( currentToken.getType() )
         {
+        	case Token.INTTYPE:
+        	{
+        		match(Token.INTTYPE);
+        		lValue = identifier();
+        		if(currentToken.getType() == Token.ASSIGNOP){
+        			match(Token.ASSIGNOP);
+        			expr = expression();
+        			codeFactory.generateIntegerAssignment(lValue, expr);
+        		}
+        		match(Token.SEMICOLON);
+        		break;
+        	}
+        	case Token.STRINGTYPE: 
+        	{
+        		match(Token.STRINGTYPE);
+        		stringLeftVal = stringIdentifier();
+        		if(currentToken.getType() == Token.ASSIGNOP){
+        			match(Token.ASSIGNOP);
+        			match(Token.STRING);
+        			stringExpr = stringExpression();
+        			codeFactory.generateStringAssignment(stringLeftVal, stringExpr);
+        		}
+        		match(Token.SEMICOLON);
+        		break;
+        	}
             case Token.ID:
             {
                 lValue = identifier();
-                match( Token.ASSIGNOP );
-                expr = expression();
-                codeFactory.generateAssignment( lValue, expr );
+                stringLeftVal = stringIdentifier();
+                if(currentToken.getType() == Token.ASSIGNOP){
+	                match( Token.ASSIGNOP );
+	                if(currentToken.getType() == Token.STRING){
+	                	stringExpr = stringExpression();
+	                	codeFactory.generateStringAssignment(stringLeftVal, stringExpr);
+	                }
+	                else {
+	                	expr = expression();
+	                	codeFactory.generateIntegerAssignment( lValue, expr );
+	                }
+                }
+                
                 match( Token.SEMICOLON );
                 break;
             }
@@ -111,7 +146,12 @@ public class Parser
             {
                 match( Token.WRITE );
                 match( Token.LPAREN );
-                expressionList();
+                if(currentToken.getType() == Token.STRING){
+                	stringList();
+                }
+                else {
+                	expressionList();
+                }
                 match( Token.RPAREN );
                 match( Token.SEMICOLON );
                 break;
@@ -146,7 +186,39 @@ public class Parser
         }
     }
     
-    private Expression expression()
+    private void stringList() {
+    	StringExpression expr;
+    	expr = stringExpression();
+    	codeFactory.generateStringWrite(expr);
+    	while(currentToken.getType() == Token.COMMA){
+    		match(Token.COMMA);
+    		expr = stringExpression();
+    		codeFactory.generateStringWrite(expr);
+    	}
+    }
+    
+    private StringExpression stringExpression() {
+		StringExpression result;
+		StringExpression leftString;
+		StringExpression rightString;
+		Operation op;
+		
+		result = stringPrimary();
+		if(currentToken.getType() == Token.MINUS){
+			error(currentToken);
+		}
+		else {
+			while(currentToken.getType() == Token.PLUS){
+				leftString = result;
+				op = addOperation();
+				rightString = stringPrimary();
+				result = codeFactory.generateStringExpression(leftString, rightString, op);
+			}
+		}
+		return result;
+	}
+
+	private Expression expression()
     {
         Expression result;
         Expression leftOperand;
@@ -208,6 +280,23 @@ public class Parser
         return result;
     }
     
+    private StringExpression stringPrimary(){
+    	StringExpression result = new StringExpression();
+    	switch(currentToken.getType()){
+    		case Token.STRING: {
+    			match(Token.STRING);
+    			result = stringExpression();
+    			break;
+    		}
+    		case Token.ID : {
+    			result = stringIdentifier();
+    			break;
+    		}
+    		default: error(currentToken);
+    	}
+    	return result;
+    }
+    
     private Operation addOperation()
     {
         Operation op = new Operation();
@@ -238,9 +327,19 @@ public class Parser
         return expr;
     }
     
+    private StringExpression stringIdentifier(){
+    	StringExpression expr;
+    	match(Token.ID);
+    	expr = processStringIdentifier();
+    	return expr;
+    }
+    
     private void match( int tokenType)
     {
         previousToken = currentToken;
+        if(currentToken.getType() == Token.END){
+        	return;
+        }
         if ( currentToken.getType() == tokenType )
             currentToken = scanner.findNextToken();
         else 
@@ -276,6 +375,7 @@ public class Parser
         return expr;
     }
     
+    
     private Operation processOperation()
     {
         Operation op = new Operation();
@@ -295,6 +395,15 @@ public class Parser
             codeFactory.generateDeclaration( previousToken );
         }
         return expr;
+    }
+    
+    private StringExpression processStringIdentifier(){
+    	StringExpression expr = new StringExpression(StringExpression.IDEXPR, previousToken.getId());
+    	if(!symbolTable.checkSTforItem(previousToken.getId())){
+    		symbolTable.addItem(previousToken);
+    		codeFactory.generateDeclaration(previousToken);
+    	}
+    	return expr;
     }
     private void error( Token token )
     {

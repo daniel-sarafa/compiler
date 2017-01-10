@@ -235,7 +235,7 @@ class CodeFactory {
 
 	}
 
-	void generateAssignment(Expression lValue, Expression expr) {
+	void generateIntegerAssignment(Expression lValue, Expression expr) {
 		if (expr.expressionType == Expression.LITERALEXPR) {
 			System.out.println("\tMOVL " + "$" + expr.expressionIntValue + ", %eax");
 			System.out.println("\tMOVL %eax, " + lValue.expressionName);
@@ -271,4 +271,23 @@ class CodeFactory {
 		return tempVar;
 	}
 
+	public void generateStringWrite(StringExpression expr) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	
+
+	public StringExpression generateStringExpression(
+			StringExpression leftString, StringExpression rightString,
+			Operation op) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public void generateStringAssignment(StringExpression stringLeftVal,
+			StringExpression stringExpr) {
+		// TODO Auto-generated method stub
+		
+	}
 }

@@ -15,19 +15,19 @@ public class StringExpression extends Expression{
         expressionName = "";
     }
         
-    public StringExpression( int type, int length)
+    public StringExpression(int type, int length)
     {
         expressionType = type;
         expressionLength = length;
     }
 
-    public StringExpression( int type, String name)
+    public StringExpression(int type, String name)
     {
         expressionType = type;
         expressionName = name;
     }
     
-    public StringExpression( int type, String name, int length)
+    public StringExpression(int type, String name, int length)
     {
         expressionType = type;
         expressionName = name;

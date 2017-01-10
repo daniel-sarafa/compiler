@@ -107,7 +107,18 @@ public class Scanner
             tokenStr = ",";
             tokenType = Token.COMMA;
             i++;
-        } else if (currentLine.charAt(i) == ':'  && i+1 < len && currentLine.charAt(i+1) == '=')
+        } 
+        else if(currentLine.substring(0, 3).equals("int")){
+        	tokenStr = "int";
+        	tokenType = Token.INTTYPE;
+        	i += 3;
+        }
+        else if(currentLine.substring(0, 6).equals("String")){
+        	tokenStr = "String";
+        	tokenType = Token.STRINGTYPE;
+        	i += 6;
+        }
+        else if (currentLine.charAt(i) == ':'  && i+1 < len && currentLine.charAt(i+1) == '=')
         {
             tokenStr = ":=";
             tokenType = Token.ASSIGNOP;
@@ -120,7 +131,17 @@ public class Scanner
             }
             tokenStr = currentLine.substring(currentLocation, i);
             tokenType = Token.INTLITERAL;
-        } else // find identifiers and reserved words
+        } 
+        else if(currentLine.charAt(i) == '"'){
+        	i++;
+        	while ( i < len && currentLine.charAt(i) != '"'){
+        		i++;
+        	}
+        	i++;
+        	tokenStr = currentLine.substring(currentLocation+1, i-1);
+        	tokenType = Token.STRING;
+        }
+        else // find identifiers and reserved words
         {
             while ( i < len && ! isReservedSymbol(currentLine.charAt(i)) )
             {
@@ -156,5 +177,4 @@ public class Scanner
         return( ch == ' ' || ch == '\n' || ch == '\t' || ch == ';' | ch == '+' ||
                 ch == '-' || ch == '(' || ch == ')' || ch == ','  || ch == ':');
     }
-
 }
