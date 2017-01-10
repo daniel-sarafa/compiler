@@ -92,13 +92,7 @@ public class Scanner
             tokenStr = ")";
             tokenType = Token.RPAREN;
             i++;
-        } 
-        else if (currentLine.charAt(i) == '"'){
-        	tokenStr = "\"";
-        	tokenType = Token.QUOTATION;
-        	i++;
-        }
-        else if(currentLine.charAt(i) == '+')
+        } else if(currentLine.charAt(i) == '+')
         {
             tokenStr = "+";
             tokenType = Token.PLUS;
@@ -160,8 +154,7 @@ public class Scanner
     boolean isReservedSymbol( char ch)
     {
         return( ch == ' ' || ch == '\n' || ch == '\t' || ch == ';' | ch == '+' ||
-                ch == '-' || ch == '(' || ch == ')' || ch == ','  || ch == ':' ||
-                ch == '"');
+                ch == '-' || ch == '(' || ch == ')' || ch == ','  || ch == ':');
     }
 
 }

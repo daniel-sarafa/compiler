@@ -235,7 +235,7 @@ class CodeFactory {
 
 	}
 
-	void generateIntegerAssignment(Expression lValue, Expression expr) {
+	void generateAssignment(Expression lValue, Expression expr) {
 		if (expr.expressionType == Expression.LITERALEXPR) {
 			System.out.println("\tMOVL " + "$" + expr.expressionIntValue + ", %eax");
 			System.out.println("\tMOVL %eax, " + lValue.expressionName);
@@ -271,38 +271,4 @@ class CodeFactory {
 		return tempVar;
 	}
 
-	public void generateStringAssignment(Expression lValue, StringExpression strExpr) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public StringExpression generateStringExpr(StringExpression leftOperand,
-			StringExpression rightOperand) {
-		Expression temp = new Expression(Expression.TEMPEXPR, createTempName());
-		System.out.println("\tMOV " + rightOperand.expressionName + ", %ebx");
-		//System.out.println("\tMOV " + right.)
-		return null;
-	}
-
-//	Expression generateArithExpr(Expression left, Expression right, Operation op) {
-//		Expression tempExpr = new Expression(Expression.TEMPEXPR, createTempName());
-//		if (right.expressionType == Expression.LITERALEXPR) {
-//			System.out.println("\tMOVL " + "$" + right.expressionName + ", %ebx");
-//		} else {
-//			System.out.println("\tMOVL " + right.expressionName + ", %ebx");
-//		}
-//		if (left.expressionType == Expression.LITERALEXPR) {
-//			System.out.println("\tMOVL " + "$" + left.expressionName + ", %eax");
-//		} else {
-//			System.out.println("\tMOVL " + left.expressionName + ", %eax");
-//		}
-//		if (op.opType == Token.PLUS) {
-//			System.out.println("\tADD %ebx, %eax");
-//			
-//		} else if (op.opType == Token.MINUS) {
-//			System.out.println("\tSUB %ebx, %eax");
-//		}
-//		System.out.println("\tMOVL " + "%eax, " + tempExpr.expressionName);
-//		return tempExpr;
-//	}
 }

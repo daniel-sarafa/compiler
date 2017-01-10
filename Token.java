@@ -19,12 +19,7 @@ public class Token
     public final static int MINUS = 12;
     public final static int INTLITERAL = 13;
     public final static int EOF = 14;
-    public final static int WRITESTRING = 15;
-    public final static int DECLARATION = 16;
-    public final static int ASSIGNMENT = 17;
-    public final static int QUOTATION = 18;
-    //one for string?
-    
+
     public Token( String tokenString, int tokenType)
     {
         id = tokenString;
@@ -36,9 +31,6 @@ public class Token
             else if ( temp.compareTo( "end") == 0) type = END;
             else if ( temp.compareTo("read") == 0) type = READ;
             else if ( temp.compareTo("write") == 0) type = WRITE;
-            else if ( temp.compareTo("writestring") == 0) type = WRITESTRING;
-            else if ( temp.compareTo("declaration") == 0) type = DECLARATION;
-            else if ( temp.compareTo("assignment") == 0) type = ASSIGNMENT;
         }
     }
     public String getId()
@@ -69,10 +61,6 @@ public class Token
             case MINUS : str = "MINUS"; break;
             case INTLITERAL : str = "INTLITERAL"; break;
             case EOF : str = "EOF"; break;
-            case WRITESTRING : str = "WRITESTRING"; break;
-            case DECLARATION : str = "DECLARATION"; break;
-            case ASSIGNMENT : str = "ASSIGNMENT"; break;
-            case QUOTATION : str = "QUOTATION"; break;
             default: str = "Lexical Error";
         }
         return str;

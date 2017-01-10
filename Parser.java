@@ -46,7 +46,7 @@ public class Parser
     {
         Parser parser = new Parser();
       //  scanner = new Scanner( args[0]);
-        scanner = new Scanner("test");
+        scanner = new Scanner( "test");
         codeFactory = new CodeFactory();
         symbolTable = new SymbolTable();
         parser.parse();
@@ -76,7 +76,7 @@ public class Parser
     private void statementList()
     {
         while ( currentToken.getType() == Token.ID || currentToken.getType() == Token.READ || 
-                    currentToken.getType() == Token.WRITE || currentToken.getType() == Token.WRITESTRING)
+                    currentToken.getType() == Token.WRITE)
         {
             statement();
         }
@@ -86,29 +86,17 @@ public class Parser
     {
         Expression lValue;
         Expression expr;
-        StringExpression strExpr;
+        
         switch ( currentToken.getType() )
         {
-            case Token.ASSIGNMENT :
+            case Token.ID:
             {
-                lValue = varName();
+                lValue = identifier();
                 match( Token.ASSIGNOP );
-                if(currentToken.getType() == 18){
-                	match(Token.QUOTATION);
-                	strExpr = stringExpression();
-                	match(Token.QUOTATION);
-                	codeFactory.generateStringAssignment(lValue, strExpr);
-                }
-                else {
-	                expr = expression();
-	                codeFactory.generateIntegerAssignment( lValue, expr );
-                }
+                expr = expression();
+                codeFactory.generateAssignment( lValue, expr );
                 match( Token.SEMICOLON );
                 break;
-            }
-            case Token.DECLARATION : {
-            	lValue = varName();
-            	match(Token.SEMICOLON);
             }
             case Token.READ :
             {
@@ -128,35 +116,19 @@ public class Parser
                 match( Token.SEMICOLON );
                 break;
             }
-            case Token.WRITESTRING :
-            {
-            	match(Token.WRITESTRING);
-            	match( Token.LPAREN);
-            	stringlist();
-            	match(Token.RPAREN);
-            	match(Token.SEMICOLON);
-            }
-            
             default: error(currentToken);
         }
     }
     
-    
-
-	private void stringlist() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	private void idList()
+    private void idList()
     {
         Expression idExpr;
-        idExpr = varName();
+        idExpr = identifier();
         codeFactory.generateRead(idExpr);
         while ( currentToken.getType() == Token.COMMA )
         {
             match(Token.COMMA);
-            idExpr = varName();
+            idExpr = identifier();
             codeFactory.generateRead(idExpr);
         }
     }
@@ -192,37 +164,7 @@ public class Parser
         return result;
     }
     
-    private StringExpression stringExpression() {
-    	StringExpression result;
-    	StringExpression leftOperand;
-    	StringExpression rightOperand;
-    	result = stringPrimary();
-    	while(currentToken.getType() == Token.PLUS) {
-    		leftOperand = result;
-    		rightOperand = stringPrimary();
-    		result = codeFactory.generateStringExpr(leftOperand, rightOperand);
-    	}
-    	return result;
-	}
-    
-    
-    private StringExpression stringPrimary() {
-    	StringExpression result = new StringExpression();
-    	switch(currentToken.getType()){
-	    	case Token.QUOTATION : {
-	    		match(Token.QUOTATION);
-	    		result = stringExpression();
-	    		match(Token.QUOTATION);
-	    	}
-	    	case Token.ID : {
-	    		result = (StringExpression)varName();
-	    	}
-    	}
-    	
-    	return result;
-	}
-
-	private Expression primary()
+    private Expression primary()
     {
         Expression result = new Expression();
         switch ( currentToken.getType() )
@@ -236,7 +178,7 @@ public class Parser
             }
             case Token.ID:
             {
-                result = varName();
+                result = identifier();
                 break;
             }
             case Token.INTLITERAL:
@@ -288,7 +230,7 @@ public class Parser
         return op;
     }
     
-    private Expression varName()
+    private Expression identifier()
     {
         Expression expr;
         match( Token.ID );
