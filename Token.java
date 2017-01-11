@@ -20,6 +20,7 @@ public class Token
     public final static int STRING = 15;
     public final static int STRINGTYPE = 16;
     public final static int INTTYPE = 17;
+    public final static int TEMP = 18;
 
     public Token( String tokenString, int tokenType)
     {
@@ -63,8 +64,9 @@ public class Token
             case INTLITERAL : str = "INTLITERAL"; break;
             case EOF : str = "EOF"; break;
             case STRING : str = "STRING"; break;
-            case STRINGTYPE : str = "STRINGTYPE"; break;
-            case INTTYPE : str = "INTTYPE"; break;
+            case STRINGTYPE : str = "string"; break;
+            case INTTYPE : str = "int"; break;
+            case TEMP : str = "temp"; break;
             default: str = "Lexical Error";
         }
         return str;

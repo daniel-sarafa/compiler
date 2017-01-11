@@ -1,25 +1,24 @@
-import java.util.ArrayList;
 
 //change variables list to be symbol list with each type so that data can be properly declared.
 //this checks types of variables so that proper read/write can be used. 
 //also change symbol table to include types.
 class CodeFactory {
 	private static int tempCount;
-	private static ArrayList<String> variablesList;
+	private static SymbolTable variablesList;
 	private static int labelCount = 0;
 	private static boolean firstWrite = true;
 
 	public CodeFactory() {
 		tempCount = 0;
-		variablesList = new ArrayList<String>();
+		variablesList = new SymbolTable();
 	}
 
 	void generateDeclaration(Token token) {
-		variablesList.add(token.getId());
+		variablesList = Parser.symbolTable;
 	}
 
 	Expression generateArithExpr(Expression left, Expression right, Operation op) {
-		Expression tempExpr = new Expression(Expression.TEMPEXPR, createTempName());
+		Expression tempExpr = new Expression(Expression.TEMPEXPR, createIntTempName());
 		if (right.expressionType == Expression.LITERALEXPR) {
 			System.out.println("\tMOVL " + "$" + right.expressionName + ", %ebx");
 		} else {
@@ -261,17 +260,31 @@ class CodeFactory {
 
 	public void generateData() {
 		System.out.println("\n\n.data");
-		for (String var : variablesList)
-			System.out.println(var + ":\t.int 0");
+		int i = 0;
+		while(i < variablesList.getSize()){
+			if(variablesList.getType(i).equals("string")){
+				System.out.println(variablesList.getItem(i) + ":\t ." + variablesList.getType(i) + " \"\"");
+			}
+			else {
+				System.out.println(variablesList.getItem(i) + ":\t ." + variablesList.getType(i) + " ");
+			}
+			i++;
+		}
 		System.out.println("__minus:  .byte '-'");
 		System.out.println("__negOne: .int -1");
 		System.out.println("__negFlag: .byte '+'");
 	}
 
-	private String createTempName() {
-		String tempVar = new String("temp" + tempCount++);
-		variablesList.add(tempVar);
-		return tempVar;
+	private String createIntTempName() {
+		Token tempVar = new Token("temp" + tempCount++, 18);
+		variablesList.addIntItem(tempVar);
+		return tempVar.getId();
+	}
+	
+	private String createStringTempName() {
+		Token tempVar = new Token("temp" + tempCount++, 18);
+		variablesList.addStringItem(tempVar);
+		return tempVar.getId();
 	}
 
 	public void generateStringWrite(StringExpression expr) {
@@ -281,7 +294,7 @@ class CodeFactory {
 	public StringExpression generateStringExpression(
 			StringExpression leftString, StringExpression rightString,
 			Operation op) {
-		StringExpression temp = new StringExpression(StringExpression.TEMPEXPR, createTempName());
+		StringExpression temp = new StringExpression(StringExpression.TEMPEXPR, createStringTempName());
 		System.out.println("String expression generated");
 		return temp;
 	}

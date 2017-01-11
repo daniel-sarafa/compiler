@@ -28,7 +28,7 @@
 public class Parser
 {
     private static Scanner scanner;
-    private static SymbolTable symbolTable;
+    public static SymbolTable symbolTable;
     private static CodeFactory codeFactory;
     private Token currentToken;
     private Token previousToken;
@@ -45,8 +45,8 @@ public class Parser
         Parser parser = new Parser();
       //  scanner = new Scanner( args[0]);
         scanner = new Scanner("test.txt");
-        codeFactory = new CodeFactory();
         symbolTable = new SymbolTable();
+        codeFactory = new CodeFactory();
         parser.parse();
     }
     
@@ -391,7 +391,7 @@ public class Parser
         
         if ( ! symbolTable.checkSTforItem( previousToken.getId() ) )
         {
-            symbolTable.addItem( previousToken );
+            symbolTable.addIntItem( previousToken );
             codeFactory.generateDeclaration( previousToken );
         }
         return expr;
@@ -400,7 +400,7 @@ public class Parser
     private StringExpression processStringIdentifier(){
     	StringExpression expr = new StringExpression(StringExpression.IDEXPR, previousToken.getId(), currentToken);
     	if(!symbolTable.checkSTforItem(previousToken.getId())){
-    		symbolTable.addItem(previousToken);
+    		symbolTable.addStringItem(previousToken);
     		codeFactory.generateDeclaration(previousToken);
     	}
     	return expr;
