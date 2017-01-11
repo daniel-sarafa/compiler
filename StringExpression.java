@@ -34,6 +34,14 @@ public class StringExpression {
         stringExpressionName = name;
         stringValue = value.toString();
     }
+    
+    public StringExpression(int type, String name, String value)
+    {
+        stringExpressionType = type;
+        stringExpressionName = name;
+        stringValue = value;
+    }
+    
     public StringExpression(int type, String name)
     {
         stringExpressionType = type;

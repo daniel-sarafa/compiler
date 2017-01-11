@@ -263,10 +263,10 @@ class CodeFactory {
 		int i = 0;
 		while(i < variablesList.getSize()){
 			if(variablesList.getType(i).equals("string")){
-				System.out.println(variablesList.getItem(i) + ":\t ." + variablesList.getType(i) + " \"\"");
+				System.out.println(variablesList.getItem(i) + ":\t ." + variablesList.getType(i) + " \"" + variablesList.getValue(variablesList.getItem(i)) + "\"");
 			}
 			else {
-				System.out.println(variablesList.getItem(i) + ":\t ." + variablesList.getType(i) + " ");
+				System.out.println(variablesList.getItem(i) + ":\t ." + variablesList.getType(i) + " " + variablesList.getValue(variablesList.getItem(i)));
 			}
 			i++;
 		}
@@ -288,7 +288,8 @@ class CodeFactory {
 	}
 
 	public void generateStringWrite(StringExpression expr) {
-		System.out.println("String written");
+		//placeholder
+		System.out.println("String written" + expr.stringValue);
 	}
 
 	public StringExpression generateStringExpression(

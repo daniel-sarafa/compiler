@@ -98,6 +98,8 @@ public class Parser
         			match(Token.ASSIGNOP);
         			expr = expression();
         			codeFactory.generateIntegerAssignment(lValue, expr);
+                	symbolTable.addValue(lValue.expressionName, Integer.toString(expr.expressionIntValue));
+
         		}
         		match(Token.SEMICOLON);
         		break;
@@ -111,6 +113,7 @@ public class Parser
         			match(Token.STRING);
         			stringExpr = stringExpression();
         			codeFactory.generateStringAssignment(stringLeftVal, stringExpr);
+                	symbolTable.addValue(stringLeftVal.stringExpressionName, stringExpr.stringValue);
         		}
         		match(Token.SEMICOLON);
         		break;
@@ -124,10 +127,12 @@ public class Parser
 	                if(currentToken.getType() == Token.STRING){
 	                	stringExpr = stringExpression();
 	                	codeFactory.generateStringAssignment(stringLeftVal, stringExpr);
+	                	symbolTable.addValue(stringLeftVal.stringExpressionName, stringExpr.stringValue);
 	                }
 	                else {
 	                	expr = expression();
 	                	codeFactory.generateIntegerAssignment( lValue, expr );
+	                	symbolTable.addValue(lValue.expressionName, Integer.toString(expr.expressionIntValue));
 	                }
                 }
                 
@@ -147,10 +152,12 @@ public class Parser
             {
                 match( Token.WRITE );
                 match( Token.LPAREN );
-                if(currentToken.getType() == Token.STRING){
+                if(currentToken.getType() == Token.ID && symbolTable.checkSTforItem(currentToken.getId()) == true &&
+                		symbolTable.getType(symbolTable.getSpot(currentToken.getId())).equals("string")){
                 	stringList();
                 }
-                else {
+                else if(currentToken.getType() == Token.ID && symbolTable.checkSTforItem(currentToken.getId()) == true &&
+                		symbolTable.getType(symbolTable.getSpot(currentToken.getId())).equals("int")){
                 	expressionList();
                 }
                 match( Token.RPAREN );
@@ -185,15 +192,17 @@ public class Parser
             expr = expression();
             codeFactory.generateWrite(expr);
         }
+       
     }
     
     private void stringList() {
     	StringExpression expr;
-    	expr = stringExpression();
+    	expr = new StringExpression(StringExpression.IDEXPR, currentToken.getId(), symbolTable.getValue(currentToken.getId()));
+    	match(Token.ID);
     	codeFactory.generateStringWrite(expr);
     	while(currentToken.getType() == Token.COMMA){
     		match(Token.COMMA);
-    		expr = stringExpression();
+    		expr = new StringExpression(StringExpression.IDEXPR, currentToken.getId(), symbolTable.getValue(currentToken.getId()));
     		codeFactory.generateStringWrite(expr);
     	}
     }
@@ -289,6 +298,10 @@ public class Parser
     			break;
     		}
     		case Token.ID : {
+    			result = stringIdentifier();
+    			break;
+    		}
+    		case Token.LPAREN : {
     			result = stringIdentifier();
     			break;
     		}
