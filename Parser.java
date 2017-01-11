@@ -10,14 +10,14 @@
 <statement>    -> WRITE(<string list>);
 <id list>    -> <ident> #ReadId {, <ident> #ReadId}
 <expr list>    -> <expression> #WriteExpr {, <expression> #WriteExpr}
-<string list>      -> <string> {, <string> }
+<string list>      -> <stringExpression> {, <stringExpression> }
 <expression>    -> <primary> {<add op> <primary> #GenInfix};
 <stringExpression>     ->  <stringPrimary> {+ <stringPrimary> #GenInFix};
 <primary>    -> ( <expression> )
 <primary>    -> <ident>
 <stringPrimary>->  <ident>
 <primary>    -> IntLiteral
-<stringPrimary>->StringLiteral
+<stringPrimary>-> StringLiteral
 <add op>    -> + #ProcessOp | - #ProcessOp
 <ident>    ->  a-z {a-z | 0-9 | specialCharacters} #ProcessId
 <system goal> -> <program> EofSym #Finish
@@ -219,6 +219,7 @@ public class Parser
 		}
 		else {
 			while(currentToken.getType() == Token.PLUS){
+				
 				leftString = result;
 				op = addOperation();
 				rightString = stringPrimary();
@@ -279,7 +280,6 @@ public class Parser
             }
             case Token.PLUS:
             {
-                match(Token.PLUS);
                 processSign();
                 match(Token.INTLITERAL);
                 result = processLiteral();
@@ -305,8 +305,14 @@ public class Parser
     			result = stringIdentifier();
     			break;
     		}
+    		case Token.PLUS : {
+    			processSign();
+    			match(Token.STRING);
+    			result = processStringLiteral();
+    			break;
+    		}
     		default: error(currentToken);
-    	}
+    	}    	
     	return result;
     }
     
@@ -388,7 +394,15 @@ public class Parser
         return expr;
     }
     
-    
+    private StringExpression processStringLiteral(){
+    	StringExpression expr = null;
+//    	String value = previousToken.getId();
+    	if(Parser.signSet && Parser.signFlag.equals("+")){
+    		expr = new StringExpression(StringExpression.LITERALEXPR, previousToken);
+    	}
+    	Parser.signSet = false;
+    	return expr;
+    }
     private Operation processOperation()
     {
         Operation op = new Operation();

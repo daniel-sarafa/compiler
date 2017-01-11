@@ -28,12 +28,20 @@ public class StringExpression {
         stringExpressionLength = length;
     }
 
+    public StringExpression(int type, Token value)
+    {
+        stringExpressionType = type;
+        stringExpressionName = "";
+        stringValue = value.getId();
+    } 
+    
     public StringExpression(int type, String name, Token value)
     {
         stringExpressionType = type;
         stringExpressionName = name;
         stringValue = value.toString();
     }
+    
     
     public StringExpression(int type, String name, String value)
     {

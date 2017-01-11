@@ -302,6 +302,9 @@ class CodeFactory {
 
 	public void generateStringAssignment(StringExpression stringLeftVal,
 			StringExpression stringExpr) {
-		System.out.println("String assigned " + stringLeftVal.stringExpressionName + ", " + stringExpr.stringValue);
+		if(stringExpr.stringValue == null){
+    		stringExpr.stringValue = "";
+    	}
+		System.out.println("String assigned " + stringLeftVal.stringExpressionName + ", " + stringLeftVal.stringValue);
 	}
 }
