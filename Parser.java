@@ -74,7 +74,8 @@ public class Parser
     private void statementList()
     {
         while ( currentToken.getType() == Token.ID || currentToken.getType() == Token.READ || 
-                    currentToken.getType() == Token.WRITE)
+                    currentToken.getType() == Token.WRITE || currentToken.getType() == Token.STRINGTYPE ||
+                    currentToken.getType() == Token.INTTYPE)
         {
             statement();
         }
@@ -282,10 +283,9 @@ public class Parser
     
     private StringExpression stringPrimary(){
     	StringExpression result = new StringExpression();
-    	switch(currentToken.getType()){
+    	switch(previousToken.getType()){
     		case Token.STRING: {
-    			match(Token.STRING);
-    			result = stringExpression();
+    			result = new StringExpression(previousToken);
     			break;
     		}
     		case Token.ID : {
@@ -398,7 +398,7 @@ public class Parser
     }
     
     private StringExpression processStringIdentifier(){
-    	StringExpression expr = new StringExpression(StringExpression.IDEXPR, previousToken.getId());
+    	StringExpression expr = new StringExpression(StringExpression.IDEXPR, previousToken.getId(), currentToken);
     	if(!symbolTable.checkSTforItem(previousToken.getId())){
     		symbolTable.addItem(previousToken);
     		codeFactory.generateDeclaration(previousToken);

@@ -1,5 +1,8 @@
 import java.util.ArrayList;
 
+//change variables list to be symbol list with each type so that data can be properly declared.
+//this checks types of variables so that proper read/write can be used. 
+//also change symbol table to include types.
 class CodeFactory {
 	private static int tempCount;
 	private static ArrayList<String> variablesList;
@@ -272,22 +275,19 @@ class CodeFactory {
 	}
 
 	public void generateStringWrite(StringExpression expr) {
-		// TODO Auto-generated method stub
-		
+		System.out.println("String written");
 	}
-
-	
 
 	public StringExpression generateStringExpression(
 			StringExpression leftString, StringExpression rightString,
 			Operation op) {
-		// TODO Auto-generated method stub
-		return null;
+		StringExpression temp = new StringExpression(StringExpression.TEMPEXPR, createTempName());
+		System.out.println("String expression generated");
+		return temp;
 	}
 
 	public void generateStringAssignment(StringExpression stringLeftVal,
 			StringExpression stringExpr) {
-		// TODO Auto-generated method stub
-		
+		System.out.println("String assigned " + stringLeftVal.stringExpressionName + ", " + stringExpr.stringValue);
 	}
 }

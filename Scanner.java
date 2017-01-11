@@ -108,12 +108,12 @@ public class Scanner
             tokenType = Token.COMMA;
             i++;
         } 
-        else if(currentLine.substring(0, 3).equals("int")){
+        else if(i <= 3 && currentLine.length() > 3 && currentLine.substring(0, 3).equals("int")){
         	tokenStr = "int";
         	tokenType = Token.INTTYPE;
         	i += 3;
         }
-        else if(currentLine.substring(0, 6).equals("String")){
+        else if(i <= 6 && currentLine.length() > 6 && currentLine.substring(0, 6).equals("String")){
         	tokenStr = "String";
         	tokenType = Token.STRINGTYPE;
         	i += 6;
