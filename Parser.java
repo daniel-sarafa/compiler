@@ -407,14 +407,24 @@ public class Parser
             symbolTable.addIntItem( previousToken );
             codeFactory.generateDeclaration( previousToken );
         }
+        else {
+        	declarationError(previousToken.getId());
+        }
         return expr;
     }
     
-    private StringExpression processStringIdentifier(){
+    private void declarationError(String id) {
+    	System.out.println("Error! Variable " + id + " already declared.");
+	}
+
+	private StringExpression processStringIdentifier(){
     	StringExpression expr = new StringExpression(StringExpression.IDEXPR, previousToken.getId(), currentToken);
     	if(!symbolTable.checkSTforItem(previousToken.getId())){
     		symbolTable.addStringItem(previousToken);
     		codeFactory.generateDeclaration(previousToken);
+    	}
+    	else {
+    		declarationError(previousToken.getId());
     	}
     	return expr;
     }

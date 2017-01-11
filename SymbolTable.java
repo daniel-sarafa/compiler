@@ -24,6 +24,7 @@ class SymbolTable
     {
         st.add( token.getId() );
         types.add("string");
+        values.add("");
     }
     
     public boolean checkSTforItem( String id )
