@@ -92,13 +92,7 @@ public class Scanner
             tokenStr = ")";
             tokenType = Token.RPAREN;
             i++;
-        } 
-        else if (currentLine.charAt(i) == '"'){
-        	tokenStr = "\"";
-        	tokenType = Token.QUOTATION;
-        	i++;
-        }
-        else if(currentLine.charAt(i) == '+')
+        } else if(currentLine.charAt(i) == '+')
         {
             tokenStr = "+";
             tokenType = Token.PLUS;
@@ -113,7 +107,62 @@ public class Scanner
             tokenStr = ",";
             tokenType = Token.COMMA;
             i++;
-        } else if (currentLine.charAt(i) == ':'  && i+1 < len && currentLine.charAt(i+1) == '=')
+        } 
+        else if (currentLine.charAt(i) == '*'){
+        	tokenStr = "*";
+        	tokenType = Token.MULT;
+        	i++;
+        }
+        else if (currentLine.charAt(i) == '/'){
+        	tokenStr = "/";
+        	tokenType = Token.DIV;
+        	i++;
+        }
+        else if (currentLine.charAt(i) == '%'){
+        	tokenStr = "%";
+        	tokenType = Token.MOD;
+        	i++;
+        }
+        else if(currentLine.charAt(i) == '&'){
+        	tokenStr = "&";
+        	tokenType = Token.AND;
+        	i++;
+        }
+        else if(currentLine.charAt(i) == '?'){
+        	tokenStr = "?";
+        	tokenType = Token.OR;
+        	i++;
+        }
+        else if(currentLine.charAt(i) == '!'){
+        	tokenStr = "!";
+        	tokenType = Token.NOT;
+        	i++;
+        }
+        //added for finding "int" types
+        else if(i <= 3 && currentLine.length() > 3 && currentLine.substring(0, 3).equals("int")){
+        	tokenStr = "int";
+        	tokenType = Token.INTTYPE;
+        	i += 3;
+        }
+        
+        //added for finding "String" types
+        else if(i <= 6 && currentLine.length() > 6 && currentLine.substring(0, 6).equals("String")){
+        	tokenStr = "String";
+        	tokenType = Token.STRINGTYPE;
+        	i += 6;
+        }
+        
+        else if(i <= 4 && currentLine.length() > 4 && currentLine.substring(0, 4).equals("bool")){
+        	tokenStr = "bool";
+        	tokenType = Token.BOOL;
+        	i += 4;
+        } 
+        else if (currentLine.charAt(i) == '$' && i+1 < len && currentLine.charAt(i+1) == '='){
+        	tokenStr = "$=";
+        	tokenType = Token.BOOLASSIGN;
+        	i += 2;
+        }
+        else if (currentLine.charAt(i) == ':'  && i+1 < len && currentLine.charAt(i+1) == '=')
         {
             tokenStr = ":=";
             tokenType = Token.ASSIGNOP;
@@ -126,7 +175,18 @@ public class Scanner
             }
             tokenStr = currentLine.substring(currentLocation, i);
             tokenType = Token.INTLITERAL;
-        } else // find identifiers and reserved words
+        } 
+        //added for finding string literals
+        else if(currentLine.charAt(i) == '"'){
+        	i++;
+        	while ( i < len && currentLine.charAt(i) != '"'){
+        		i++;
+        	}
+        	i++;
+        	tokenStr = currentLine.substring(currentLocation+1, i-1);
+        	tokenType = Token.STRING;
+        }
+        else // find identifiers and reserved words
         {
             while ( i < len && ! isReservedSymbol(currentLine.charAt(i)) )
             {
@@ -161,7 +221,6 @@ public class Scanner
     {
         return( ch == ' ' || ch == '\n' || ch == '\t' || ch == ';' | ch == '+' ||
                 ch == '-' || ch == '(' || ch == ')' || ch == ','  || ch == ':' ||
-                ch == '"');
+                ch == '*' || ch == '/' || ch == '&' || ch == '?' || ch == '%');
     }
-
 }

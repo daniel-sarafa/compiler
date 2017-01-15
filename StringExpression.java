@@ -1,36 +1,67 @@
-
-public class StringExpression extends Expression{
+//string expression class based on expression class
+//used for strings
+public class StringExpression {
 
     public final static int IDEXPR = 0;
     public final static int LITERALEXPR = 1;
     public final static int TEMPEXPR = 2;
     
-    public int expressionType;
-    public String expressionName;
-    public int expressionLength;
+    public int stringExpressionType;
+    public String stringExpressionName;
+    public int stringExpressionLength;
+    public String stringValue;
         
-    public StringExpression( )
+    public StringExpression()
     {
-        expressionType = 0;
-        expressionName = "";
+        stringExpressionType = 0;
+        stringExpressionName = "";
     }
-        
-    public StringExpression( int type, int length)
+    public StringExpression(Token value)
     {
-        expressionType = type;
-        expressionLength = length;
+        stringExpressionType = 0;
+        stringExpressionName = "";
+        stringValue = value.getId();
+    }   
+    
+    public StringExpression(int type, int length)
+    {
+        stringExpressionType = type;
+        stringExpressionLength = length;
     }
+   
 
-    public StringExpression( int type, String name)
+    public StringExpression(int type, Token value)
     {
-        expressionType = type;
-        expressionName = name;
+        stringExpressionType = type;
+        stringExpressionName = "";
+        stringValue = value.getId();
+    } 
+    
+    public StringExpression(int type, String name, Token value)
+    {
+        stringExpressionType = type;
+        stringExpressionName = name;
+        stringValue = value.toString();
     }
     
-    public StringExpression( int type, String name, int length)
+    
+    public StringExpression(int type, String name, String value)
     {
-        expressionType = type;
-        expressionName = name;
-        expressionLength = length;
+        stringExpressionType = type;
+        stringExpressionName = name;
+        stringValue = value;
+    }
+    
+    public StringExpression(int type, String name)
+    {
+        stringExpressionType = type;
+        stringExpressionName = name;
+    }
+    
+    public StringExpression(int type, String name, int length)
+    {
+        stringExpressionType = type;
+        stringExpressionName = name;
+        stringExpressionLength = length;
     }
 }

@@ -1,4 +1,5 @@
-
+//added a few types to reflect new
+//types added such as strings
 
 public class Token
 {
@@ -19,12 +20,20 @@ public class Token
     public final static int MINUS = 12;
     public final static int INTLITERAL = 13;
     public final static int EOF = 14;
-    public final static int WRITESTRING = 15;
-    public final static int DECLARATION = 16;
-    public final static int ASSIGNMENT = 17;
-    public final static int QUOTATION = 18;
-    //one for string?
+    public final static int STRING = 15;
+    public final static int STRINGTYPE = 16;
+    public final static int INTTYPE = 17;
+    public final static int TEMP = 18;
+    public final static int MULT = 19;
+    public final static int DIV = 20;
+    public final static int MOD = 21;
+    public final static int AND = 22;
+    public final static int OR = 23;
+    public final static int NOT = 24;
+    public final static int BOOL = 25;
+	public static final int BOOLASSIGN = 26;
     
+
     public Token( String tokenString, int tokenType)
     {
         id = tokenString;
@@ -36,9 +45,6 @@ public class Token
             else if ( temp.compareTo( "end") == 0) type = END;
             else if ( temp.compareTo("read") == 0) type = READ;
             else if ( temp.compareTo("write") == 0) type = WRITE;
-            else if ( temp.compareTo("writestring") == 0) type = WRITESTRING;
-            else if ( temp.compareTo("declaration") == 0) type = DECLARATION;
-            else if ( temp.compareTo("assignment") == 0) type = ASSIGNMENT;
         }
     }
     public String getId()
@@ -69,10 +75,17 @@ public class Token
             case MINUS : str = "MINUS"; break;
             case INTLITERAL : str = "INTLITERAL"; break;
             case EOF : str = "EOF"; break;
-            case WRITESTRING : str = "WRITESTRING"; break;
-            case DECLARATION : str = "DECLARATION"; break;
-            case ASSIGNMENT : str = "ASSIGNMENT"; break;
-            case QUOTATION : str = "QUOTATION"; break;
+            case STRING : str = "STRING"; break;
+            case STRINGTYPE : str = "String"; break;
+            case INTTYPE : str = "int"; break;
+            case TEMP : str = "temp"; break;
+            case MULT : str = "MULT"; break;
+            case DIV : str = "DIV"; break;
+            case MOD : str = "MOD"; break;
+            case AND : str = "AND"; break;
+            case OR : str = "OR"; break;
+            case NOT : str = "NOT"; break;
+            case BOOL : str = "BOOL"; break;
             default: str = "Lexical Error";
         }
         return str;

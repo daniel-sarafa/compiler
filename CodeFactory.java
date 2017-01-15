@@ -1,22 +1,26 @@
-import java.util.ArrayList;
 
+//change variables list to be symbol list with each type so that data can be properly declared.
+//this checks types of variables so that proper read/write can be used. 
+//also change symbol table to include types.
 class CodeFactory {
 	private static int tempCount;
-	private static ArrayList<String> variablesList;
+	public static SymbolTable variablesList;
 	private static int labelCount = 0;
 	private static boolean firstWrite = true;
 
 	public CodeFactory() {
 		tempCount = 0;
-		variablesList = new ArrayList<String>();
+		variablesList = new SymbolTable();
 	}
 
-	void generateDeclaration(Token token) {
-		variablesList.add(token.getId());
+	//sets variables list equal to symbol table each time a 
+	//new symbol is added
+	void generateDeclaration() {
+		variablesList = Parser.symbolTable;
 	}
 
 	Expression generateArithExpr(Expression left, Expression right, Operation op) {
-		Expression tempExpr = new Expression(Expression.TEMPEXPR, createTempName());
+		Expression tempExpr = new Expression(Expression.TEMPEXPR, createIntTempName());
 		if (right.expressionType == Expression.LITERALEXPR) {
 			System.out.println("\tMOVL " + "$" + right.expressionName + ", %ebx");
 		} else {
@@ -45,7 +49,7 @@ class CodeFactory {
 			break;
 		}
 		case Expression.LITERALEXPR: {
-			System.out.println("write " + expr.expressionIntValue);
+			generateAssemblyCodeForWriting("$" + expr.expressionName);
 		}
 		}
 	}
@@ -235,15 +239,7 @@ class CodeFactory {
 
 	}
 
-	void generateIntegerAssignment(Expression lValue, Expression expr) {
-		if (expr.expressionType == Expression.LITERALEXPR) {
-			System.out.println("\tMOVL " + "$" + expr.expressionIntValue + ", %eax");
-			System.out.println("\tMOVL %eax, " + lValue.expressionName);
-		} else {
-			System.out.println("\tMOVL " + expr.expressionName + ", %eax");
-			System.out.println("\tMOVL %eax, " + lValue.expressionName);
-		}
-	}
+	
 
 	void generateStart() {
 		System.out.println(".text\n.global _start\n\n_start:\n");
@@ -258,51 +254,121 @@ class CodeFactory {
 
 	public void generateData() {
 		System.out.println("\n\n.data");
-		for (String var : variablesList)
-			System.out.println(var + ":\t.int 0");
+		int i = 0;
+		while(i < variablesList.getSize()){
+			if(variablesList.getType(i).equals("string")){
+				if(variablesList.getValue(variablesList.getItem(i)).equals("")){
+					System.out.println(variablesList.getItem(i) + ": .zero 256");
+				}
+				else {
+					System.out.println(variablesList.getItem(i) + ":\t ." + variablesList.getType(i) + " \"" + variablesList.getValue(variablesList.getItem(i)) + "\"");
+					System.out.println(".equ " + variablesList.getItem(i) + "Len, . - " + variablesList.getItem(i) + "\n");
+				}
+			}
+			else {
+				System.out.println(variablesList.getItem(i) + ":\t ." + variablesList.getType(i) + " " + variablesList.getValue(variablesList.getItem(i)));
+			}
+			i++;
+		}
 		System.out.println("__minus:  .byte '-'");
 		System.out.println("__negOne: .int -1");
 		System.out.println("__negFlag: .byte '+'");
 	}
 
-	private String createTempName() {
-		String tempVar = new String("temp" + tempCount++);
-		variablesList.add(tempVar);
-		return tempVar;
+	//creating temp name for ints
+	public String createIntTempName() {
+		Token tempVar = new Token("__temp" + tempCount++, 18);
+		variablesList.addIntItem(tempVar);
+		return tempVar.getId();
+	}
+	
+	//creating temp name for strings
+	public String createStringTempName() {
+		Token tempVar = new Token("__temp" + tempCount++, 18);
+		variablesList.addStringItem(tempVar);
+		return tempVar.getId();
 	}
 
-	public void generateStringAssignment(Expression lValue, StringExpression strExpr) {
+	//creating temp name for strings including value.
+	public String createStringTempName(String value) {
+		Token tempVar = new Token("__temp" + tempCount++, 18);
+		variablesList.addStringItem(tempVar);
+		variablesList.addValue(tempVar.getId(), value);
+		return tempVar.getId();
+	}
+	
+	//generates assembly code for writing strings to console
+	public void generateStringWrite(StringExpression expr) {
+		System.out.println("\tmov $4, %eax");
+		System.out.println("\tmov $1, %ebx");
+		System.out.println("\tmov $" + expr.stringExpressionName + ", %ecx");
+		if(expr.stringValue.length() != 0)
+			System.out.println("\tmov $" + expr.stringExpressionName + "Len, %edx");
+		else 
+			System.out.println("\tmov $6, %edx");
+		System.out.println("\tint $0x80");
+
+	}
+
+	//string concatenation assembly code. Is not entirely correct, but 
+	//we believe that it is close.
+	public StringExpression generateStringExpression(
+			StringExpression leftString, StringExpression rightString,
+			Operation op) {
+		StringExpression temp = new StringExpression(StringExpression.TEMPEXPR, createStringTempName(),  leftString.stringValue);
+		System.out.println("\tmovl $0, %eax");
+		System.out.println("\tmovl $0, %ebx");
+		
+		System.out.println("firstString: ");
+		System.out.println("\tcmpl $0, " + leftString.stringExpressionName + "(%eax)");
+		System.out.println("\tje firstDone");
+		System.out.println("\tmovb " + leftString.stringExpressionName + "(%eax), %cl");
+		System.out.println("\tmovb %cl, " + temp.stringExpressionName + "(%ebx)");
+		System.out.println("\tincl %eax");
+		System.out.println("\tincl %ebx");
+		System.out.println("\tjmp firstString\n");
+		
+		System.out.println("firstDone: ");
+		System.out.println("\tmovl $0, %eax");
+		System.out.println("\tmovl $0, %ebx");
+		
+		System.out.println("secondString: ");
+		System.out.println("\tcmpl $0, " + rightString.stringExpressionName + "(%eax)");
+		System.out.println("\tje secondDone");
+		System.out.println("\tmovb " + rightString.stringExpressionName + "(%eax), %cl");
+		System.out.println("\tmovb %cl, " + temp.stringExpressionName + "(%ebx)");
+		System.out.println("\tincl %eax");
+		System.out.println("\tincl %ebx");
+		System.out.println("\tjmp secondString\n");
+		
+		System.out.println("secondDone: ");
+		return temp;
+	}
+
+	void generateIntegerAssignment(Expression lValue, Expression expr) {
+		if (expr.expressionType == Expression.LITERALEXPR) {
+			System.out.println("\tMOVL " + "$" + expr.expressionIntValue + ", %eax");
+			System.out.println("\tMOVL %eax, " + lValue.expressionName);
+		} else {
+			System.out.println("\tMOVL " + expr.expressionName + ", %eax");
+			System.out.println("\tMOVL %eax, " + lValue.expressionName);
+		}
+	}
+	
+	//not sure what to put in this method
+	public void generateStringAssignment(StringExpression stringLeftVal,
+			StringExpression stringExpr) {
+	
+	}
+
+	public void generateBoolAssignment(Expression boolLeftVal, Expression expr) {
 		// TODO Auto-generated method stub
 		
 	}
 
-	public StringExpression generateStringExpr(StringExpression leftOperand,
-			StringExpression rightOperand) {
-		Expression temp = new Expression(Expression.TEMPEXPR, createTempName());
-		System.out.println("\tMOV " + rightOperand.expressionName + ", %ebx");
-		//System.out.println("\tMOV " + right.)
+	public Expression generateBoolExpr(Expression leftOperand,
+			Expression rightOperand, Operation op) {
+		// TODO Auto-generated method stub
 		return null;
 	}
-
-//	Expression generateArithExpr(Expression left, Expression right, Operation op) {
-//		Expression tempExpr = new Expression(Expression.TEMPEXPR, createTempName());
-//		if (right.expressionType == Expression.LITERALEXPR) {
-//			System.out.println("\tMOVL " + "$" + right.expressionName + ", %ebx");
-//		} else {
-//			System.out.println("\tMOVL " + right.expressionName + ", %ebx");
-//		}
-//		if (left.expressionType == Expression.LITERALEXPR) {
-//			System.out.println("\tMOVL " + "$" + left.expressionName + ", %eax");
-//		} else {
-//			System.out.println("\tMOVL " + left.expressionName + ", %eax");
-//		}
-//		if (op.opType == Token.PLUS) {
-//			System.out.println("\tADD %ebx, %eax");
-//			
-//		} else if (op.opType == Token.MINUS) {
-//			System.out.println("\tSUB %ebx, %eax");
-//		}
-//		System.out.println("\tMOVL " + "%eax, " + tempExpr.expressionName);
-//		return tempExpr;
-//	}
 }
