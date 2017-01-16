@@ -37,6 +37,18 @@ class CodeFactory {
 		} else if (op.opType == Token.MINUS) {
 			System.out.println("\tSUB %ebx, %eax");
 		}
+		else if(op.opType == Token.MULT){
+			System.out.println("\timull %ebx");
+		}
+		else if(op.opType == Token.DIV){
+			System.out.println("\txorl %edx, %edx"); //clears edx
+			System.out.println("\tidiv %ebx");
+		}
+		else if (op.opType == Token.MOD){
+			System.out.println("\txorl %edx, %edx"); //clears edx
+			System.out.println("\tidiv %ebx");
+			System.out.println("\tmovl %edx, " + tempExpr.expressionName);
+		}
 		System.out.println("\tMOVL " + "%eax, " + tempExpr.expressionName);
 		return tempExpr;
 	}
@@ -236,10 +248,7 @@ class CodeFactory {
 	private String generateLabel(String start) {
 		String label = start + labelCount++;
 		return label;
-
 	}
-
-	
 
 	void generateStart() {
 		System.out.println(".text\n.global _start\n\n_start:\n");
@@ -266,7 +275,7 @@ class CodeFactory {
 				}
 			}
 			else {
-				System.out.println(variablesList.getItem(i) + ":\t ." + variablesList.getType(i) + " " + variablesList.getValue(variablesList.getItem(i)));
+				System.out.println(variablesList.getItem(i) + ":\t ." + "int" + " " + variablesList.getValue(variablesList.getItem(i)));
 			}
 			i++;
 		}
@@ -355,24 +364,96 @@ class CodeFactory {
 		}
 	}
 	
-	//not sure what to put in this method
-	public void generateStringAssignment(StringExpression stringLeftVal,
-			StringExpression stringExpr) {
-	
-	}
-
 	public void generateBoolAssignment(Expression boolLeftVal, Expression expr) {
-		System.out.println("boolean assigned.");
+		if (expr.expressionType == Expression.LITERALEXPR) {
+			System.out.println("\tMOVL " + "$" + expr.expressionIntValue + ", %eax");
+			System.out.println("\tMOVL %eax, " + boolLeftVal.expressionName);
+		} else {
+			System.out.println("\tMOVL " + expr.expressionName + ", %eax");
+			System.out.println("\tMOVL %eax, " + boolLeftVal.expressionName);
+		}
 	}
 
 	public Expression generateBoolExpr(Expression leftOperand,
 			Expression rightOperand, Operation op) {
-		System.out.println("boolean expr generated.");
-		return null;
+		String falseFunc = generateAssemFuncName("__false");
+		String trueFunc = generateAssemFuncName("__true");
+		String continueFunc = generateAssemFuncName("__continue");
+		Expression tempExpr = new Expression(Expression.TEMPEXPR, createIntTempName());
+		if(rightOperand.expressionType == Expression.LITERALEXPR){
+			System.out.println("\tmovl $" + rightOperand.expressionName + ", %ebx");
+		}
+		else {
+			System.out.println("\tmovl " + rightOperand.expressionName + ", %ebx");
+		}
+		if(leftOperand.expressionType == Expression.LITERALEXPR){
+			System.out.println("\tmovl " + leftOperand.expressionName + ", %eax");
+		}
+		else {
+			System.out.println("\tmovl " + leftOperand.expressionName + ", %eax");
+		}
+		
+		if(op.opType == Token.AND){
+			System.out.println("\tcmpl $0, %eax");
+			System.out.println("\tje " + falseFunc);
+			System.out.println("\tcmpl $0, %ebx");
+			System.out.println("\tje " + falseFunc);
+			System.out.println("\tjne " + trueFunc + "\n");
+			System.out.println(falseFunc + ": ");
+			System.out.println("\tmovl $0, " + tempExpr.expressionName);
+			System.out.println("\tjmp" + continueFunc + "\n");
+			System.out.println(trueFunc + ": ");
+			System.out.println("\tmovl $1, " + tempExpr.expressionName + "\n");
+			System.out.println(continueFunc + ": ");
+		}
+		else if(op.opType == Token.OR){
+			System.out.println("\tcmpl $0, %eax");
+			System.out.println("\tjne " + trueFunc);
+			System.out.println("\tcmpl $0, %ebx");
+			System.out.println("\tjne " + trueFunc);
+			System.out.println("\tje " + falseFunc + "\n");
+			System.out.println(trueFunc + ": ");
+			System.out.println("\tmovl $1, " + tempExpr.expressionName);
+			System.out.println("\tjmp " + continueFunc + "\n");
+			System.out.println(falseFunc + ": ");
+			System.out.println("\tmovl $0, " + tempExpr.expressionName + "\n");
+			System.out.println(continueFunc + ": ");
+		}
+		return tempExpr;
 	}
 
-	public Expression generateNotExpr(Expression leftOperand, Operation op) {
-		System.out.println("not expression generated");
-		return null;
+	public Expression generateNotExpr(Expression rightOperand, Operation op) {
+		Expression tempExpr = new Expression(Expression.TEMPEXPR, createIntTempName());
+		if(rightOperand.expressionType == Expression.LITERALEXPR){
+			System.out.println("\tmovl $" + rightOperand.expressionName + ", %eax");
+		}
+		else {
+			System.out.println("\tmovl " + rightOperand.expressionName + ", %eax");
+		}
+		String falseFunc = generateAssemFuncName("__false");
+		String trueFunc = generateAssemFuncName("__true");
+		String continueFunc = generateAssemFuncName("__continue");
+		System.out.println("\tcmpl $0, %eax");
+		System.out.println("\tje " + falseFunc);
+		System.out.println("\tcmpl $1, %eax");
+		System.out.println("\tje " + trueFunc + "\n");
+		System.out.println(falseFunc + ": ");
+		System.out.println("\tmovl $0, " + tempExpr.expressionName);
+		System.out.println("\tjmp " + continueFunc + "\n");
+		System.out.println(trueFunc + ": ");
+		System.out.println("\tmovl $1, " + tempExpr.expressionName);
+		System.out.println("\tjmp " + continueFunc + "\n");
+		System.out.println(continueFunc + ": ");
+		return tempExpr;
+	}
+	private String generateAssemFuncName(String func){
+		String name = func + labelCount++;
+		return name;
+	}
+
+	//unsure what goes in this method.
+	public void generateStringAssignment(StringExpression stringLeftVal,
+			StringExpression stringExpr) {
+		
 	}
 }

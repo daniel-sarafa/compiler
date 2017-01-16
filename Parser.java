@@ -137,6 +137,7 @@ public class Parser
         			break;
         		}
         	}
+        	//declares and assigns bools as needed.
         	case Token.BOOL : {
         		match(Token.BOOL);
         		boolLeftVal = boolIdentifier();
@@ -255,6 +256,7 @@ public class Parser
     	return expr;
 	}
 
+    //
 	private Expression boolOrExpression() {
     	Expression result;
     	Expression leftOperand;
@@ -271,6 +273,7 @@ public class Parser
     	return result;
     }
 
+	//method for mult operations.
     private Expression factor(){
     	Expression result;
     	Expression leftOperand;
@@ -292,6 +295,7 @@ public class Parser
     	return result;
     }
     
+    //method similar to addop for multiplication operations.
 	private Operation multOp() {
 		Operation op = new Operation();
 		int type = currentToken.getType();
@@ -313,6 +317,8 @@ public class Parser
 		return op;
 	}
 	
+	//specific level of precedence for logical operations. 
+	//works similarly to expression and string expression.
 	private Expression boolAndExpression() {
 		Expression result;
 		Expression leftOperand;
@@ -352,6 +358,8 @@ public class Parser
 		return result;
 	}
 
+	//next 3 methods correspond to logical operation 
+	//matching and processing.
 	private Operation notOperation() {
 		Operation op = new Operation();
 		match(Token.NOT);
@@ -597,6 +605,7 @@ public class Parser
         }
     }
 
+    //new operations added.
     private void processSign()
     {
     	Parser.signSet = true;
@@ -653,6 +662,7 @@ public class Parser
         return op;
     }
     
+    //makes expression equal to symbol table entry if it already exists.
     private Expression processIdentifier()
     {
         Expression expr = new Expression( Expression.IDEXPR, previousToken.getId());
@@ -660,6 +670,10 @@ public class Parser
         {
             codeFactory.generateDeclaration();
         }
+         else {
+        	 expr = new Expression(Expression.IDEXPR, symbolTable.getItem(symbolTable.getSpot(previousToken.getId())), 
+        			 Integer.parseInt(symbolTable.getValue(previousToken.getId())));
+         }
         return expr;
     }
     
@@ -693,6 +707,7 @@ public class Parser
     	System.exit(0);
     }
     
+    //error if types are mixed.
     private void typeMixingError(Token currentToken) {
 		System.out.println("Error! Operation types are mixed.");
 		System.exit(0);
@@ -708,6 +723,7 @@ public class Parser
         System.exit(0);
     }
     
+    //error if division by zero occurs.
     private void divideByZeroError(Token currentToken) {
 		System.out.println("Divide by 0 error!");
 		System.exit(0);
