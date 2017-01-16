@@ -142,7 +142,7 @@ public class Parser
         		boolLeftVal = boolIdentifier();
         		if(currentToken.getType() == Token.ASSIGNOP){
         			match(Token.ASSIGNOP);
-        			expr = boolExpression();
+        			expr = boolOrExpression();
         			symbolTable.addBoolItem(boolLeftVal, Integer.toString(expr.expressionIntValue));
         			codeFactory.generateBoolAssignment(boolLeftVal, expr);
         			match(Token.SEMICOLON);
@@ -207,7 +207,7 @@ public class Parser
             		else if(symbolTable.getType(currentToken.getId()).equals("bool")){
             			boolLeftVal = boolIdentifier();
             			match(Token.ASSIGNOP);
-            			expr = boolExpression();
+            			expr = boolOrExpression();
             			codeFactory.generateBoolAssignment(boolLeftVal, expr);
             			symbolTable.addValue(boolLeftVal.expressionName, Integer.toString(expr.expressionIntValue));
             			match(Token.SEMICOLON);
@@ -230,17 +230,42 @@ public class Parser
         }
     }
     
-    private Expression boolExpression() {
+    private Expression expression()
+    {
+        Expression result;
+        Expression leftOperand;
+        Expression rightOperand;
+        Operation op;
+        
+        result = factor();
+        while ( currentToken.getType() == Token.PLUS || currentToken.getType() == Token.MINUS )
+        {
+            leftOperand = result;
+            op = addOperation();
+            rightOperand = expression();
+            result = codeFactory.generateArithExpr( leftOperand, rightOperand, op );
+        }
+        return result;
+    }
+    
+    private Expression boolIdentifier() {
+    	Expression expr;
+    	match(Token.ID);
+    	expr = processIdentifier();
+    	return expr;
+	}
+
+	private Expression boolOrExpression() {
     	Expression result;
     	Expression leftOperand;
     	Expression rightOperand;
     	Operation op;
     	
-    	result = logicalFact();
+    	result = boolAndExpression();
     	while(currentToken.getType() == Token.AND){
     		leftOperand = result; 
     		op = andOp();
-    		rightOperand = boolExpression();
+    		rightOperand = boolOrExpression();
     		result = codeFactory.generateBoolExpr(leftOperand, rightOperand, op);
     	}
     	return result;
@@ -253,8 +278,8 @@ public class Parser
     	Operation op;
     	
     	result = primary();
-    	int type = currentToken.getType();
-    	while(type == Token.MULT || type == Token.MOD || type == Token.DIV){
+    	while(currentToken.getType() == Token.MULT || 
+    			currentToken.getType() == Token.MOD || currentToken.getType() == Token.DIV){
     		leftOperand = result;
     		op = multOp();
     		rightOperand = factor();
@@ -267,45 +292,88 @@ public class Parser
     	return result;
     }
     
-	private void divideByZeroError(Token currentToken2) {
-		// TODO Auto-generated method stub
+	private Operation multOp() {
+		Operation op = new Operation();
+		int type = currentToken.getType();
+		if(type == Token.MULT){
+			match(Token.MULT);
+			op = processOperation();
+		}
+		else if(type == Token.DIV){
+			match(Token.DIV);
+			op = processOperation();
+		}
+		else if(type == Token.MOD){
+			match(Token.MOD);
+			op = processOperation();
+		}
+		else {
+			error(currentToken);
+		}
+		return op;
+	}
+	
+	private Expression boolAndExpression() {
+		Expression result;
+		Expression leftOperand;
+		Expression rightOperand;
+		Operation op;
 		
+		result = notExpr();
+		while(currentToken.getType() == Token.OR){
+			leftOperand = result;
+			op = orOp();
+			rightOperand = boolAndExpression();
+			result = codeFactory.generateBoolExpr(leftOperand, rightOperand, op);
+		}
+		int type = currentToken.getType();
+		if(type == Token.PLUS || type == Token.MINUS || type == Token.DIV ||
+				type == Token.MULT || type == Token.MOD){
+			typeMixingError(currentToken);
+		}
+		return result;
+	}
+	
+	
+	//this method outputs a boolean expression either with or without a not.
+	//boolean expressions can contain any numbers, and any logical operators
+	//and 0 is false while any other number is true.
+	private Expression notExpr() {
+		Expression result;
+		if(currentToken.getType() == Token.NOT){
+			Operation op = notOperation();
+			result = primary(); 
+			Expression leftOperand = result;
+			result = codeFactory.generateNotExpr(leftOperand, op);
+		}
+		else {
+			result = primary(); 
+		}
+		return result;
 	}
 
-	private Operation multOp() {
-		// TODO Auto-generated method stub
-		return null;
+	private Operation notOperation() {
+		Operation op = new Operation();
+		match(Token.NOT);
+		op = processOperation();
+		return op;
 	}
+
+	private Operation orOp() {
+		Operation op = new Operation();
+		match(Token.OR);
+		op = processOperation();
+		return op;
+	}
+
 
 	private Operation andOp() {
-		// TODO Auto-generated method stub
-		return null;
+		Operation op = new Operation();
+		match(Token.AND);
+		op = processOperation();
+		return op;
 	}
-
-	private Expression logicalFact() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	private Expression boolIdentifier() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	//error for not declaring variables properly.
-    //exits so assembly code does not print after an error.
-    private void declarationError(String id) {
-		System.out.println("Error! Variable " + id + " has not been declared.");
-		System.exit(0);
-	}
-    
-    //error for not initializing variable before use.
-    //also exits.
-    private void initializationError(String id){
-    	System.out.println("Error! Variable " + id + " has not been initialized.");
-    	System.exit(0);
-    }
-
+	
 	private void idList()
     {
         Expression idExpr;
@@ -386,24 +454,6 @@ public class Parser
 		return result;
 	}
 
-	private Expression expression()
-    {
-        Expression result;
-        Expression leftOperand;
-        Expression rightOperand;
-        Operation op;
-        
-        result = primary();
-        while ( currentToken.getType() == Token.PLUS || currentToken.getType() == Token.MINUS )
-        {
-            leftOperand = result;
-            op = addOperation();
-            rightOperand = primary();
-            result = codeFactory.generateArithExpr( leftOperand, rightOperand, op );
-        }
-        return result;
-    }
-    
     private Expression primary()
     {
         Expression result = new Expression();
@@ -441,6 +491,26 @@ public class Parser
                 match(Token.INTLITERAL);
                 result = processLiteral();
                 break;
+            }
+            case Token.MOD: 
+            {
+            	processSign();
+            	match(Token.INTLITERAL);
+            	result = processLiteral();
+            	break;
+            }
+            case Token.MULT: 
+            {
+            	processSign();
+            	match(Token.INTLITERAL);
+            	result = processLiteral();
+            	break;
+            }
+            case Token.DIV : {
+            	processSign();
+            	match(Token.INTLITERAL);
+            	result = processLiteral();
+            	break;
             }
             default: error( currentToken );
         }
@@ -494,6 +564,7 @@ public class Parser
         return op;
     }
     
+    
     private Expression identifier()
     {
         Expression expr;
@@ -532,7 +603,17 @@ public class Parser
     	if ( previousToken.getType() == Token.PLUS ) 
     	{
     		Parser.signFlag = "+";
-    	} else
+    	} 
+    	else if(previousToken.getType() == Token.MULT){
+    		Parser.signFlag = "*";
+    	}
+    	else if(previousToken.getType() == Token.DIV){
+    		Parser.signFlag = "/";
+    	}
+    	else if(previousToken.getType() == Token.MOD){
+    		Parser.signFlag = "%";
+    	}
+    	else
     	{
     		Parser.signFlag = "-";
     	}
@@ -562,6 +643,12 @@ public class Parser
         Operation op = new Operation();
         if ( previousToken.getType() == Token.PLUS ) op.opType = Token.PLUS;
         else if ( previousToken.getType() == Token.MINUS ) op.opType = Token.MINUS;
+        else if (previousToken.getType() == Token.MULT) op.opType = Token.MULT;
+        else if (previousToken.getType() == Token.DIV) op.opType = Token.DIV;
+        else if (previousToken.getType() == Token.MOD) op.opType = Token.MOD;
+        else if ( previousToken.getType() == Token.NOT) op.opType = Token.NOT;
+        else if ( previousToken.getType() == Token.AND) op.opType = Token.AND;
+        else if ( previousToken.getType() == Token.OR) op.opType = Token.OR;
         else error( previousToken );
         return op;
     }
@@ -592,6 +679,25 @@ public class Parser
     	return expr;
     }
 	
+	//error for not declaring variables properly.
+    //exits so assembly code does not print after an error.
+    private void declarationError(String id) {
+		System.out.println("Error! Variable " + id + " has not been declared.");
+		System.exit(0);
+	}
+    
+    //error for not initializing variable before use.
+    //also exits.
+    private void initializationError(String id){
+    	System.out.println("Error! Variable " + id + " has not been initialized.");
+    	System.exit(0);
+    }
+    
+    private void typeMixingError(Token currentToken) {
+		System.out.println("Error! Operation types are mixed.");
+		System.exit(0);
+    }
+    
 	//added exit so no more assembly code gets printed after an error.
     private void error( Token token )
     {
@@ -601,4 +707,9 @@ public class Parser
             System.out.println( "ID name: " + token.getId() );
         System.exit(0);
     }
+    
+    private void divideByZeroError(Token currentToken) {
+		System.out.println("Divide by 0 error!");
+		System.exit(0);
+	}
 }

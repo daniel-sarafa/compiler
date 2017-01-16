@@ -362,13 +362,17 @@ class CodeFactory {
 	}
 
 	public void generateBoolAssignment(Expression boolLeftVal, Expression expr) {
-		// TODO Auto-generated method stub
-		
+		System.out.println("boolean assigned.");
 	}
 
 	public Expression generateBoolExpr(Expression leftOperand,
 			Expression rightOperand, Operation op) {
-		// TODO Auto-generated method stub
+		System.out.println("boolean expr generated.");
+		return null;
+	}
+
+	public Expression generateNotExpr(Expression leftOperand, Operation op) {
+		System.out.println("not expression generated");
 		return null;
 	}
 }
