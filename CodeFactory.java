@@ -48,6 +48,7 @@ class CodeFactory {
 			System.out.println("\txorl %edx, %edx"); //clears edx
 			System.out.println("\tidiv %ebx");
 			System.out.println("\tmovl %edx, " + tempExpr.expressionName);
+			return tempExpr;
 		}
 		System.out.println("\tMOVL " + "%eax, " + tempExpr.expressionName);
 		return tempExpr;
