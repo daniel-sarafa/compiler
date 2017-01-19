@@ -89,6 +89,7 @@ public class Parser
     
     private void statementList()
     {
+    	//if it hits one of these then it ends the current statement list.
     	while(currentToken.getType() != Token.END && currentToken.getType() != Token.ENDIF &&
     			currentToken.getType() != Token.ENDELSE && currentToken.getType() != Token.ENDWHILE){
             statement();
@@ -311,7 +312,8 @@ public class Parser
 			else {
 				while(currentToken.getType() != Token.ENDELSE){
 					match(currentToken.getType());
-				}
+				} //moves past else statement so nothing gets run
+				  //if it isnt supposed to be.
 				match(Token.ENDELSE);
 			}
 		}

@@ -533,7 +533,7 @@ class CodeFactory {
 			System.out.println("\tmovl " + rightOperand.expressionName + ", %ebx");
 		}
 		if(leftOperand.expressionType == Expression.LITERALEXPR){
-			System.out.println("\tmovl " + leftOperand.expressionName + ", %eax");
+			System.out.println("\tmovl $" + leftOperand.expressionName + ", %eax");
 		}
 		else {
 			System.out.println("\tmovl " + leftOperand.expressionName + ", %eax");
@@ -551,6 +551,12 @@ class CodeFactory {
 			System.out.println(trueFunc + ": ");
 			System.out.println("\tmovl $1, " + tempExpr.expressionName + "\n");
 			System.out.println(continueFunc + ": ");
+			if(leftOperand.expressionIntValue == 1 && rightOperand.expressionIntValue == 1){
+				tempExpr.expressionIntValue = 1;
+			}
+			else {
+				tempExpr.expressionIntValue = 0;
+			}
 		}
 		else if(op.opType == Token.OR){
 			System.out.println("\tcmpl $0, %eax");
@@ -564,6 +570,12 @@ class CodeFactory {
 			System.out.println(falseFunc + ": ");
 			System.out.println("\tmovl $0, " + tempExpr.expressionName + "\n");
 			System.out.println(continueFunc + ": ");
+			if(leftOperand.expressionIntValue == 1 || rightOperand.expressionIntValue == 1){
+				tempExpr.expressionIntValue = 1;
+			}
+			else {
+				tempExpr.expressionIntValue = 0;
+			}
 		}
 		return tempExpr;
 	}
@@ -612,6 +624,10 @@ class CodeFactory {
 			Expression rightOp, Operation op) {
 		String continueFunc = generateAssemFuncName("__continue");
 		String whileFunc = generateAssemFuncName("__while");
+		
+		//makes sure that the while end statements will use the correct
+		//loop names that correspond to the correct while statement.
+		//thats why this returns the names of those functions.
 		ArrayList<String> namesForThisWhile = new ArrayList<String>();
 		namesForThisWhile.add(whileFunc);
 		namesForThisWhile.add(continueFunc);
