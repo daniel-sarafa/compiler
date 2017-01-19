@@ -144,11 +144,6 @@ public class Scanner
         	tokenType = Token.INTTYPE;
         	i += 3;
         }
-        else if(currentLine.charAt(i) == '$' && i+1 < len && currentLine.charAt(i+1) == '='){
-        	tokenStr = "$=";
-        	tokenType = Token.RELATIONALASSIGN;
-        	i += 2;
-        }
         //added for finding "String" types
         else if(i <= 6 && currentLine.length() > 6 && currentLine.substring(0, 6).equals("String")){
         	tokenStr = "String";
@@ -224,6 +219,21 @@ public class Scanner
         	tokenStr = "ENDELSE";
         	tokenType = Token.ENDELSE;
         	i += 7;
+        } 
+        else if( i <= 9 && currentLine.length() > 9 && currentLine.substring(0, 9).equals("BEGINPROC")){
+        	tokenStr = "BEGINPROC";
+        	tokenType = Token.PROC;
+        	i += 9;
+        } 
+        else if( i <= 7 && currentLine.length() > 7 && currentLine.substring(0, 7).equals("ENDPROC")){
+        	tokenStr = "ENDPROC";
+        	tokenType = Token.ENDPROC;
+        	i += 7;
+        } 
+        else if(i <= 4 && currentLine.length() > 4 && currentLine.substring(0, 4).equals("CALL")){
+        	tokenStr = "CALL";
+        	tokenType = Token.CALL;
+        	i += 9;
         } 
         else if (currentLine.charAt(i) == ':'  && i+1 < len && currentLine.charAt(i+1) == '=')
         {

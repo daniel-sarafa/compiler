@@ -50,7 +50,9 @@ public class Parser
     private Token previousToken;
     private static boolean signSet = false;
     private static String signFlag = "+";
-
+    public static ArrayList<SymbolTable> scopes;
+    public static int scopeNum;
+    public static int returnNum; 
     public Parser()
     {
         
@@ -63,6 +65,9 @@ public class Parser
         scanner = new Scanner("test.txt");
         symbolTable = new SymbolTable();
         codeFactory = new CodeFactory();
+        scopes = new ArrayList<SymbolTable>();
+        scopes.add(0, symbolTable);
+        scopeNum = 0;
         parser.parse();
     }
     
@@ -90,8 +95,16 @@ public class Parser
     private void statementList()
     {
     	//if it hits one of these then it ends the current statement list.
+    
     	while(currentToken.getType() != Token.END && currentToken.getType() != Token.ENDIF &&
     			currentToken.getType() != Token.ENDELSE && currentToken.getType() != Token.ENDWHILE){
+//    		if(previousToken.getType() == Token.ENDPROC || previousToken.getType() == Token.ENDIF || previousToken.getType() == Token.ENDWHILE || currentToken.getType() == Token.ENDIF){
+//        	}
+//    		if(currentToken.getType() == Token.PROC || currentToken.getType() == Token.IF || currentToken.getType() == Token.WHILE){
+//        		scopeNum++;
+//        		System.out.println(scopeNum);
+//
+//        	}
             statement();
         }
     }
@@ -120,12 +133,12 @@ public class Parser
         {
             match( Token.WRITE );
             match( Token.LPAREN );
-            if(currentToken.getType() == Token.ID && symbolTable.checkSTforItem(currentToken.getId()) == true &&
-            		symbolTable.getType(symbolTable.getSpot(currentToken.getId())).equals("string")){
+            if(currentToken.getType() == Token.ID && scopes.get(scopeNum).checkSTforItem(currentToken.getId() + scopeNum ) == true &&
+            		scopes.get(scopeNum).getType(symbolTable.getSpot(currentToken.getId() + scopeNum )).equals("string")){
             	stringList();
             }
-            else if(currentToken.getType() == Token.ID && symbolTable.checkSTforItem(currentToken.getId()) == true &&
-            		symbolTable.getType(symbolTable.getSpot(currentToken.getId())).equals("int")){
+            else if(currentToken.getType() == Token.ID && symbolTable.checkSTforItem(currentToken.getId() + scopeNum) == true &&
+            		scopes.get(scopeNum).getType(symbolTable.getSpot(currentToken.getId() + scopeNum )).equals("int")){
             	expressionList();
             }
             match( Token.RPAREN );
@@ -137,20 +150,20 @@ public class Parser
         	{
         		match(Token.INTTYPE);
         		lValue = identifier();
-        		if(symbolTable.checkSTforItem(lValue.expressionName)){
+        		if(scopes.get(scopeNum).checkSTforItem(lValue.expressionName)){
         			alreadyDeclaredError(previousToken.getId());
         		}
         		if(currentToken.getType() == Token.ASSIGNOP){
         			match(Token.ASSIGNOP);
         			expr = expression();
-        			symbolTable.addIntItem(lValue, Integer.toString(expr.expressionIntValue));
+        			scopes.get(scopeNum).addIntItem(lValue, Integer.toString(expr.expressionIntValue));
         			codeFactory.generateIntegerAssignment(lValue, expr);
         			match(Token.SEMICOLON);
         			break;
         		}
         		else if(currentToken.getType() == Token.SEMICOLON){
         			expr = new Expression(Expression.IDEXPR, "0");
-        			symbolTable.addIntItem(lValue, "0");
+        			scopes.get(scopeNum).addIntItem(lValue, "0");
         			match(Token.SEMICOLON);
         			break;
         		}
@@ -159,17 +172,20 @@ public class Parser
         	case Token.BOOL : {
         		match(Token.BOOL);
         		boolLeftVal = boolIdentifier();
+        		if(scopes.get(scopeNum).checkSTforItem(boolLeftVal.expressionName)){
+        			alreadyDeclaredError(previousToken.getId());
+        		}
         		if(currentToken.getType() == Token.ASSIGNOP){
         			match(Token.ASSIGNOP);
         			expr = logicalExpressionBegin();
-        			symbolTable.addBoolItem(boolLeftVal, Integer.toString(expr.expressionIntValue));
+        			scopes.get(scopeNum).addBoolItem(boolLeftVal, Integer.toString(expr.expressionIntValue));
         			codeFactory.generateBoolAssignment(boolLeftVal, expr);
         			match(Token.SEMICOLON);
         			break;
         		}
         		else if (currentToken.getType() == Token.SEMICOLON){
-        			expr = new Expression(Expression.IDEXPR, "0");
-        			symbolTable.addBoolItem(boolLeftVal, "0");
+        			expr = new Expression(Expression.IDEXPR, previousToken.getId() + scopeNum);
+        			scopes.get(scopeNum).addBoolItem(boolLeftVal, "0");
         			match(Token.SEMICOLON);
         			break;
         		}
@@ -179,9 +195,12 @@ public class Parser
         		match(Token.LPAREN);
         		Expression result = relationalExpression();
         		match(Token.RPAREN);
+        		scopeNum++;
         		if(result.expressionIntValue != 0){
         			statementList();
         			match(Token.ENDIF);
+        			scopes.remove(scopeNum);
+            		scopeNum--;
         			elseStatement(false);
         			break;
         		}
@@ -190,6 +209,8 @@ public class Parser
         				match(currentToken.getType()); //moves scanner to else part
         			}
         			match(Token.ENDIF);
+        			scopes.remove(scopeNum);
+            		scopeNum--;
         			elseStatement(true);
         			break;
         		}
@@ -200,9 +221,12 @@ public class Parser
         		ArrayList<String> whileNameForAssem = new ArrayList<String>();
         		whileNameForAssem = relationalExpForWhile();
         		match(Token.RPAREN);
+        		scopeNum++;
        			statementList();
            		codeFactory.generateWhileEnd(whileNameForAssem.get(0), whileNameForAssem.get(1));
         		match(Token.ENDWHILE);
+        		scopes.remove(scopeNum);
+        		scopeNum--;
         		break;
         	}
         	//declares and assigns strings as needed. also checks for errors.
@@ -211,33 +235,33 @@ public class Parser
         	{
         		match(Token.STRINGTYPE);
         		stringLeftVal = stringIdentifier();
-        		if(symbolTable.checkSTforItem(stringLeftVal.stringExpressionName)){
+        		if(scopes.get(scopeNum).checkSTforItem(stringLeftVal.stringExpressionName  + scopeNum)){
         			alreadyDeclaredError(stringLeftVal.stringExpressionName);
         		}
         		if(currentToken.getType() == Token.ASSIGNOP){
         			match(Token.ASSIGNOP);
         			if(currentToken.getType() == Token.ID){
-        				if(!symbolTable.checkSTforItem(currentToken.getId())){
+        				if(!scopes.get(scopeNum).checkSTforItem(currentToken.getId()  + scopeNum)){
         					declarationError(currentToken.getId());
         				}
-        				if(symbolTable.getValue(currentToken.getId()).equals("")){
+        				if(scopes.get(scopeNum).getValue(currentToken.getId()).equals("")){
             				initializationError(currentToken.getId());
             			}
         				stringExpr = stringExpression();
-        				symbolTable.addStringItem(stringLeftVal, stringExpr.stringValue);
+        				scopes.get(scopeNum).addStringItem(stringLeftVal, stringExpr.stringValue);
         				codeFactory.generateStringAssignment(stringLeftVal, stringExpr);
         				match(Token.SEMICOLON);
         			}
         			else {
 	        			stringExpr = stringExpression();
-	        			symbolTable.addStringItem(stringLeftVal, stringExpr.stringValue);
+	        			scopes.get(scopeNum).addStringItem(stringLeftVal, stringExpr.stringValue);
 	        			codeFactory.generateStringAssignment(stringLeftVal, stringExpr);
 	        			match(Token.SEMICOLON);
         			}
         		}
         		else if(currentToken.getType() == Token.SEMICOLON){
         			stringExpr = new StringExpression(StringExpression.LITERALEXPR, "");
-        			symbolTable.addStringItem(stringLeftVal, "");
+        			scopes.get(scopeNum).addStringItem(stringLeftVal, "");
         			codeFactory.generateStringAssignment(stringLeftVal, stringExpr);
         			match(Token.SEMICOLON);
         		}
@@ -248,21 +272,21 @@ public class Parser
         	//this code is accessed, then a declaration error is thrown.
             case Token.ID:
             {
-            	if(symbolTable.checkSTforItem(currentToken.getId())){
-            		if(symbolTable.getType(currentToken.getId()).equals("int")){
+            	if(scopes.get(scopeNum).checkSTforItem(currentToken.getId()  + scopeNum)){
+            		if(scopes.get(scopeNum).getType(currentToken.getId()  + scopeNum).equals("int")){
             			lValue = identifier();
 			            match( Token.ASSIGNOP );
 			            expr = expression();
 		               	codeFactory.generateIntegerAssignment( lValue, expr );
-		               	symbolTable.addValue(lValue.expressionName, Integer.toString(expr.expressionIntValue));
+		               	scopes.get(scopeNum).addValue(lValue.expressionName, Integer.toString(expr.expressionIntValue));
 		                match( Token.SEMICOLON );
             		}
-            		else if(symbolTable.getType(currentToken.getId()).equals("bool")){
+            		else if(scopes.get(scopeNum).getType(currentToken.getId() + scopeNum).equals("bool")){
             			boolLeftVal = boolIdentifier();
             			match(Token.ASSIGNOP);
             			expr = logicalExpressionBegin();
             			codeFactory.generateBoolAssignment(boolLeftVal, expr);
-            			symbolTable.addValue(boolLeftVal.expressionName, Integer.toString(expr.expressionIntValue));
+            			scopes.get(scopeNum).addValue(boolLeftVal.expressionName, Integer.toString(expr.expressionIntValue));
             			match(Token.SEMICOLON);
             		}
             		else {
@@ -270,7 +294,7 @@ public class Parser
             			match( Token.ASSIGNOP );
             			stringExpr = stringExpression();
 		               	codeFactory.generateStringAssignment(stringLeftVal, stringExpr);
-		               	symbolTable.addValue(stringLeftVal.stringExpressionName, stringExpr.stringValue);
+		               	scopes.get(scopeNum).addValue(stringLeftVal.stringExpressionName, stringExpr.stringValue);
 		                match( Token.SEMICOLON );
             		}
 	            }
@@ -565,24 +589,24 @@ public class Parser
     	StringExpression expr;
     	if(currentToken.getType() == Token.ID){
     		match(Token.ID);
-    		expr = new StringExpression(StringExpression.IDEXPR, previousToken.getId(), symbolTable.getValue(previousToken.getId()));
+    		expr = new StringExpression(StringExpression.IDEXPR, previousToken.getId(), scopes.get(scopeNum).getValue(previousToken.getId() + scopeNum));
     		codeFactory.generateStringWrite(expr);
     	}
     	else if(currentToken.getType() == Token.STRING) {
     		match(Token.STRING);
-    		expr = new StringExpression(StringExpression.LITERALEXPR, previousToken.getId());
+    		expr = new StringExpression(StringExpression.LITERALEXPR, previousToken.getId() + scopeNum);
     		codeFactory.generateStringWrite(expr);
     	}
     	while(currentToken.getType() == Token.COMMA){
     		match(Token.COMMA);
     		if(currentToken.getType() == Token.ID){
         		match(Token.ID);
-        		expr = new StringExpression(StringExpression.IDEXPR, previousToken.getId(), symbolTable.getValue(previousToken.getId()));
+        		expr = new StringExpression(StringExpression.IDEXPR, previousToken.getId(), scopes.get(scopeNum).getValue(previousToken.getId() + scopeNum));
         		codeFactory.generateStringWrite(expr);
         	}
         	else if(currentToken.getType() == Token.STRING) {
         		match(Token.STRING);
-        		expr = new StringExpression(StringExpression.TEMPEXPR, codeFactory.createStringTempName(previousToken.getId()));
+        		expr = new StringExpression(StringExpression.TEMPEXPR, codeFactory.createStringTempName(previousToken.getId() + scopeNum));
         		codeFactory.generateStringWrite(expr);
         	}
     	}
@@ -784,7 +808,7 @@ public class Parser
         int value = ( new Integer( previousToken.getId() )).intValue();
         if (Parser.signSet && Parser.signFlag.equals("-"))
         {
-        	 expr = new Expression( Expression.LITERALEXPR, "-"+previousToken.getId(), value*-1 );
+        	 expr = new Expression( Expression.LITERALEXPR, "-"+previousToken.getId() , value*-1 );
         } else
         {
         	 expr = new Expression( Expression.LITERALEXPR, previousToken.getId(), value ); 
@@ -822,14 +846,15 @@ public class Parser
     //makes expression equal to symbol table entry if it already exists.
     private Expression processIdentifier()
     {
-        Expression expr = new Expression( Expression.IDEXPR, previousToken.getId());
-         if ( ! symbolTable.checkSTforItem( previousToken.getId() ) )
+        Expression expr = new Expression( Expression.IDEXPR, previousToken.getId()  + scopeNum );
+         if (!scopes.get(scopeNum).checkSTforItem( previousToken.getId()  + scopeNum) )
         {
             codeFactory.generateDeclaration();
+            scopes.add(scopeNum, symbolTable);
         }
          else {
-        	 expr = new Expression(Expression.IDEXPR, symbolTable.getItem(symbolTable.getSpot(previousToken.getId())), 
-        			 Integer.parseInt(symbolTable.getValue(previousToken.getId())));
+        	 expr = new Expression(Expression.IDEXPR, scopes.get(scopeNum).getItem(symbolTable.getSpot(previousToken.getId()  + scopeNum)), 
+        			 Integer.parseInt(scopes.get(scopeNum).getValue(previousToken.getId()  + scopeNum)));
          }
         return expr;
     }
@@ -838,14 +863,15 @@ public class Parser
     //equal to the symbol table. If it is, then the new string expression's value is set equal
     //to the old symbol's value
 	private StringExpression processStringIdentifier(){
-    	StringExpression expr = new StringExpression(StringExpression.IDEXPR, previousToken.getId());
-    	if(!symbolTable.checkSTforItem(previousToken.getId())){
+    	StringExpression expr = new StringExpression(StringExpression.IDEXPR, previousToken.getId()  + scopeNum);
+    	if(!scopes.get(scopeNum).checkSTforItem(previousToken.getId() + scopeNum)){
     		codeFactory.generateDeclaration();
+    		scopes.add(scopeNum, symbolTable);
     		//symbol table added to elsewhere
     	}
     	else {
-    		expr = new StringExpression(StringExpression.IDEXPR, symbolTable.getItem(symbolTable.getSpot(previousToken.getId())),
-    				symbolTable.getValue(previousToken.getId()));
+    		expr = new StringExpression(StringExpression.IDEXPR, scopes.get(scopeNum).getItem(symbolTable.getSpot(previousToken.getId()  + scopeNum)),
+    				scopes.get(scopeNum).getValue(previousToken.getId() + scopeNum));
     	}
     	return expr;
     }

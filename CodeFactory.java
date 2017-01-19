@@ -7,18 +7,23 @@ import java.util.ArrayList;
 class CodeFactory {
 	private static int tempCount;
 	public static SymbolTable variablesList;
+	public static ArrayList<SymbolTable> variablesListList;
+	public static int symCount;
 	private static int labelCount = 0;
 	private static boolean firstWrite = true;
 
 	public CodeFactory() {
 		tempCount = 0;
 		variablesList = new SymbolTable();
+		variablesListList = new ArrayList<SymbolTable>();
+		symCount = 0;
 	}
 
 	//sets variables list equal to symbol table each time a 
 	//new symbol is added
 	void generateDeclaration() {
-		variablesList = Parser.symbolTable;
+		variablesList = Parser.scopes.get(Parser.scopeNum);
+		variablesListList.add(symCount++, variablesList);
 	}
 
 	Expression generateArithExpr(Expression left, Expression right, Operation op) {
@@ -410,18 +415,22 @@ class CodeFactory {
 	public void generateData() {
 		System.out.println("\n\n.data");
 		int i = 0;
-		while(i < variablesList.getSize()){
-			if(variablesList.getType(i).equals("string")){
-				if(variablesList.getValue(variablesList.getItem(i)).equals("")){
-					System.out.println(variablesList.getItem(i) + ": .zero 256");
+		int j = 0;
+		while(i < variablesListList.size()){
+			while(j < variablesListList.get(i).getSize()){
+				if(variablesListList.get(i).getType(j).equals("string")){
+					if(variablesListList.get(i).getValue(variablesList.getItem(j)).equals("")){
+						System.out.println(variablesListList.get(i).getItem(j) + ": .zero 256");
+					}
+					else {
+						System.out.println(variablesListList.get(i).getItem(j) + ":\t ." + variablesListList.get(i).getType(i) + " \"" + variablesListList.get(i).getValue(variablesListList.get(i).getItem(j)) + "\"");
+						System.out.println(".equ " + variablesList.getItem(i) + "Len, . - " + variablesList.getItem(i) + "\n");
+					}
 				}
 				else {
-					System.out.println(variablesList.getItem(i) + ":\t ." + variablesList.getType(i) + " \"" + variablesList.getValue(variablesList.getItem(i)) + "\"");
-					System.out.println(".equ " + variablesList.getItem(i) + "Len, . - " + variablesList.getItem(i) + "\n");
+					System.out.println(variablesListList.get(i).getItem(j) + ":\t ." + "int" + " " + variablesListList.get(i).getValue(variablesListList.get(i).getItem(j)));
 				}
-			}
-			else {
-				System.out.println(variablesList.getItem(i) + ":\t ." + "int" + " " + variablesList.getValue(variablesList.getItem(i)));
+				j++;
 			}
 			i++;
 		}
