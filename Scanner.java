@@ -133,7 +133,7 @@ public class Scanner
         	tokenType = Token.OR;
         	i++;
         }
-        else if(currentLine.charAt(i) == '!'){
+        else if(currentLine.charAt(i) == '!' && i+1 < len && currentLine.charAt(i+1) != '='){
         	tokenStr = "!";
         	tokenType = Token.NOT;
         	i++;
@@ -144,24 +144,87 @@ public class Scanner
         	tokenType = Token.INTTYPE;
         	i += 3;
         }
-        
+        else if(currentLine.charAt(i) == '$' && i+1 < len && currentLine.charAt(i+1) == '='){
+        	tokenStr = "$=";
+        	tokenType = Token.RELATIONALASSIGN;
+        	i += 2;
+        }
         //added for finding "String" types
         else if(i <= 6 && currentLine.length() > 6 && currentLine.substring(0, 6).equals("String")){
         	tokenStr = "String";
         	tokenType = Token.STRINGTYPE;
         	i += 6;
         }
-        
+        else if(currentLine.charAt(i) == '<' && i+1 < len && currentLine.charAt(i+1) != '='){
+        	tokenStr = "<";
+        	tokenType = Token.LESS;
+        	i++;
+        }
+        else if(currentLine.charAt(i) == '>' && i+1 < len && currentLine.charAt(i+1) != '='){
+        	tokenStr = ">";
+        	tokenType = Token.GREAT;
+        	i++;
+        }
+        else if(currentLine.charAt(i) == '<' && i+1 < len && currentLine.charAt(i+1) == '='){
+        	tokenStr = "<=";
+        	tokenType = Token.LESSOREQ;
+        	i+=2;
+        }
+        else if(currentLine.charAt(i) == '>' && i+1 < len && currentLine.charAt(i+1) == '='){
+        	tokenStr = ">=";
+        	tokenType = Token.GREATOREQ;
+        	i+=2;
+        }
+        else if(currentLine.charAt(i) == '=' && i+1 < len && currentLine.charAt(i+1) == '='){
+        	tokenStr = "==";
+        	tokenType = Token.EQUAL;
+        	i+=2;
+        }
+        else if(currentLine.charAt(i) == '=' && i+1 < len && currentLine.charAt(i+1) != '='){
+        	tokenStr = "=";
+        	tokenType = Token.LexERROR;
+        	i++;
+        }
+        else if(currentLine.charAt(i) == '!' && i+1 < len && currentLine.charAt(i+1) == '='){
+        	tokenStr = "!=";
+        	tokenType = Token.NOTEQUAL;
+        	i+=2;
+        }
         else if(i <= 4 && currentLine.length() > 4 && currentLine.substring(0, 4).equals("bool")){
         	tokenStr = "bool";
         	tokenType = Token.BOOL;
         	i += 4;
         } 
-        else if (currentLine.charAt(i) == '$' && i+1 < len && currentLine.charAt(i+1) == '='){
-        	tokenStr = "$=";
-        	tokenType = Token.BOOLASSIGN;
+        else if(currentLine.charAt(i) == 'I' && i + 1 < len && currentLine.charAt(i+1) == 'F'){
+        	tokenStr = "IF";
+        	tokenType = Token.IF;
         	i += 2;
         }
+        else if(i <= 5 && currentLine.length() > 5 && currentLine.substring(0, 5).equals("WHILE")){
+        	tokenStr = "WHILE";
+        	tokenType = Token.WHILE;
+        	i += 5;
+        } 
+        else if(i <= 5 && currentLine.length() > 5 && currentLine.substring(0, 5).equals("ENDIF")){
+        	tokenStr = "ENDIF";
+        	tokenType = Token.ENDIF;
+        	i += 5;
+        } 
+        else if( i <= 8 &&currentLine.length() > 8 && currentLine.substring(0, 8).equals("ENDWHILE")){
+        	tokenStr = "ENDWHILE";
+        	tokenType = Token.ENDWHILE;
+        	i += 8;
+        } 
+        else if( i <= 4 && currentLine.length() > 4 && currentLine.substring(0, 4).equals("ELSE")){
+        	tokenStr = "ELSE";
+        	tokenType = Token.ELSE;
+        	i += 4;
+        } 
+        else if( i <= 7 && currentLine.length() > 7 && currentLine.substring(0, 7).equals("ENDELSE")){
+        	tokenStr = "ENDELSE";
+        	tokenType = Token.ENDELSE;
+        	i += 7;
+        } 
         else if (currentLine.charAt(i) == ':'  && i+1 < len && currentLine.charAt(i+1) == '=')
         {
             tokenStr = ":=";
@@ -221,6 +284,7 @@ public class Scanner
     {
         return( ch == ' ' || ch == '\n' || ch == '\t' || ch == ';' | ch == '+' ||
                 ch == '-' || ch == '(' || ch == ')' || ch == ','  || ch == ':' ||
-                ch == '*' || ch == '/' || ch == '&' || ch == '?' || ch == '%');
+                ch == '*' || ch == '/' || ch == '&' || ch == '?' || ch == '%' ||
+                ch == '!' || ch == '>' || ch == '<' || ch == '=');
     }
 }

@@ -32,7 +32,19 @@ public class Token
     public final static int NOT = 24;
     public final static int BOOL = 25;
 	public static final int BOOLASSIGN = 26;
-    
+	public final static int LESS = 27;
+	public final static int GREAT = 28;
+	public final static int LESSOREQ = 29;
+	public final static int GREATOREQ = 30;
+	public final static int EQUAL = 31;
+	public final static int NOTEQUAL = 32;
+	public final static int IF = 33;
+	public final static int ENDIF = 34;
+	public final static int ELSE = 35;
+	public final static int ENDELSE = 36;
+	public final static int WHILE = 37;
+	public final static int ENDWHILE = 38;
+	public final static int RELATIONALASSIGN = 39;
 
     public Token( String tokenString, int tokenType)
     {
@@ -45,6 +57,17 @@ public class Token
             else if ( temp.compareTo( "end") == 0) type = END;
             else if ( temp.compareTo("read") == 0) type = READ;
             else if ( temp.compareTo("write") == 0) type = WRITE;
+            else if ( temp.compareTo("int") == 0) type = INTTYPE;
+            else if ( temp.compareTo("string") == 0) type = STRINGTYPE;
+            else if ( temp.compareTo("and") == 0) type = AND;
+            else if ( temp.compareTo("or") == 0) type = OR;
+            else if ( temp.compareTo("not") == 0) type = NOT;
+            else if ( temp.compareTo("if") == 0) type = IF;
+            else if ( temp.compareTo("endif") == 0) type = ENDIF;
+            else if ( temp.compareTo("else") == 0) type = ELSE;
+            else if ( temp.compareTo("endelse") == 0) type = ENDELSE;
+            else if ( temp.compareTo("while") == 0) type = WHILE;
+            else if ( temp.compareTo("endwhile") == 0) type = ENDWHILE;
         }
     }
     public String getId()
@@ -86,6 +109,19 @@ public class Token
             case OR : str = "OR"; break;
             case NOT : str = "NOT"; break;
             case BOOL : str = "BOOL"; break;
+            case LESS : str = "LESSTHAN"; break;
+            case GREAT : str = "GREATERTHAN"; break;
+            case LESSOREQ : str = "LESSTHANOREQUAL"; break;
+            case GREATOREQ : str = "GREATERTHANOREQUAL"; break;
+            case EQUAL : str = "EQUAL"; break;
+            case NOTEQUAL : str = "NOTEQUAL"; break;
+            case IF : str = "IF"; break;
+            case ENDIF : str = "ENDIF"; break;
+            case ELSE : str = "ELSE"; break;
+            case ENDELSE : str = "ENDELSE"; break;
+            case WHILE : str = "WHILE"; break;
+            case ENDWHILE : str = "ENDWHILE"; break;
+            case RELATIONALASSIGN : str = "RELATIONALASSIGN"; break;
             default: str = "Lexical Error";
         }
         return str;

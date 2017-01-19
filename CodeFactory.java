@@ -1,3 +1,5 @@
+import java.util.ArrayList;
+
 
 //change variables list to be symbol list with each type so that data can be properly declared.
 //this checks types of variables so that proper read/write can be used. 
@@ -21,6 +23,10 @@ class CodeFactory {
 
 	Expression generateArithExpr(Expression left, Expression right, Operation op) {
 		Expression tempExpr = new Expression(Expression.TEMPEXPR, createIntTempName());
+		String falseFunc = generateAssemFuncName("__false");
+		String trueFunc = generateAssemFuncName("__true");
+		String continueFunc = generateAssemFuncName("__continue");
+
 		if (right.expressionType == Expression.LITERALEXPR) {
 			System.out.println("\tMOVL " + "$" + right.expressionName + ", %ebx");
 		} else {
@@ -49,6 +55,145 @@ class CodeFactory {
 			System.out.println("\tidiv %ebx");
 			System.out.println("\tmovl %edx, " + tempExpr.expressionName);
 			return tempExpr;
+		}
+		else if(op.opType == Token.EQUAL){
+			System.out.println("\tcmpl %ebx, %eax");
+			System.out.println("\tje " + trueFunc);
+			System.out.println("\tjne " + falseFunc + "\n");
+			
+			System.out.println(falseFunc + ": ");
+			System.out.println("\tmovl $0, " + tempExpr.expressionName);
+			System.out.println("\tjmp " + continueFunc + "\n");
+			
+			System.out.println(trueFunc + ": ");
+			System.out.println("\tmovl $1, " + tempExpr.expressionName);
+			System.out.println("\tjmp " + continueFunc + "\n");
+			
+			System.out.println(continueFunc + ": \n");
+			if(left.expressionIntValue == right.expressionIntValue){
+				tempExpr.expressionIntValue = 1;
+				return tempExpr;
+			}
+			else {
+				tempExpr.expressionIntValue = 0;
+			}
+			//System.out.println("\n" + continueFalseFunc + ": ");
+			return tempExpr;
+		}
+		else if(op.opType == Token.NOTEQUAL){
+			System.out.println("\tcmpl %ebx, %eax");
+			System.out.println("\tjne " + trueFunc);
+			System.out.println("\tjmp " + falseFunc + "\n");
+			
+			System.out.println(falseFunc + ": ");
+			System.out.println("\tmovl $0, " + tempExpr.expressionName);
+			System.out.println("\tjmp " + continueFunc + "\n");
+			
+			System.out.println(trueFunc + ": ");
+			System.out.println("\tmovl $1, " + tempExpr.expressionName);
+			System.out.println("\tjmp " + continueFunc + "\n");
+			
+			System.out.println(continueFunc + ": \n");
+			if(left.expressionIntValue != right.expressionIntValue){
+				tempExpr.expressionIntValue = 1;
+				return tempExpr;
+			}
+			else{
+				tempExpr.expressionIntValue = 0;
+				return tempExpr;
+			}
+		}
+		else if(op.opType == Token.LESS){
+			System.out.println("\tcmpl %ebx, %eax");
+			System.out.println("\tjl " + trueFunc);
+			System.out.println("\tjmp " + falseFunc + "\n");
+			
+			System.out.println(falseFunc + ": ");
+			System.out.println("\tmovl $0, " + tempExpr.expressionName);
+			System.out.println("\tjmp " + continueFunc + "\n");
+			
+			System.out.println(trueFunc + ": ");
+			System.out.println("\tmovl $1, " + tempExpr.expressionName);
+			System.out.println("\tjmp " + continueFunc + "\n");
+			
+			System.out.println(continueFunc + ": ");
+			if(left.expressionIntValue < right.expressionIntValue){
+				tempExpr.expressionIntValue = 1;
+				return tempExpr;
+			}
+			else {
+				tempExpr.expressionIntValue = 0;
+				return tempExpr;
+			}
+		}
+		else if(op.opType == Token.GREAT){
+			System.out.println("\tcmpl %ebx, %eax");
+			System.out.println("\tjg " + trueFunc);
+			System.out.println("\tjmp " + falseFunc + "\n");
+			
+			System.out.println(falseFunc + ": ");
+			System.out.println("\tmovl $0, " + tempExpr.expressionName);
+			System.out.println("\tjmp " + continueFunc + "\n");
+			
+			System.out.println(trueFunc + ": ");
+			System.out.println("\tmovl $1, " + tempExpr.expressionName);
+			System.out.println("\tjmp " + continueFunc + "\n");
+			
+			System.out.println(continueFunc + ": ");
+			if(left.expressionIntValue > right.expressionIntValue){
+				tempExpr.expressionIntValue = 1;
+				return tempExpr;
+			}
+			else {
+				tempExpr.expressionIntValue = 0;
+				return tempExpr;
+			}
+		}
+		else if(op.opType == Token.LESSOREQ){
+			System.out.println("\tcmpl %ebx, %eax");
+			System.out.println("\tjle " + trueFunc);
+			System.out.println("\tjmp " + falseFunc + "\n");
+			
+			System.out.println(falseFunc + ": ");
+			System.out.println("\tmovl $0, " + tempExpr.expressionName);
+			System.out.println("\tjmp " + continueFunc + "\n");
+			
+			System.out.println(trueFunc + ": ");
+			System.out.println("\tmovl $1, " + tempExpr.expressionName);
+			System.out.println("\tjmp " + continueFunc);
+			
+			System.out.println(continueFunc + ": ");
+			if(left.expressionIntValue <= right.expressionIntValue){
+				tempExpr.expressionIntValue = 1;
+				return tempExpr;
+			}
+			else {
+				tempExpr.expressionIntValue = 0;
+				return tempExpr;
+			}
+		}
+		else if(op.opType == Token.GREATOREQ){
+			System.out.println("\tcmpl %ebx, %eax");
+			System.out.println("\tjge " + trueFunc);
+			System.out.println("\tjmp " + falseFunc + "\n");
+			
+			System.out.println(falseFunc + ": ");
+			System.out.println("\tmovl $0, " + tempExpr.expressionName);
+			System.out.println("\tjmp " + continueFunc + "\n");
+			
+			System.out.println(trueFunc + ": ");
+			System.out.println("\tmovl $1, " + tempExpr.expressionName);
+			System.out.println("\tjmp " + continueFunc + "\n");
+			
+			System.out.println(continueFunc + ": ");
+			if(left.expressionIntValue >= right.expressionIntValue){
+				tempExpr.expressionIntValue = 1;
+				return tempExpr;
+			}
+			else {
+				tempExpr.expressionIntValue = 0;
+				return tempExpr;
+			}
 		}
 		System.out.println("\tMOVL " + "%eax, " + tempExpr.expressionName);
 		return tempExpr;
@@ -456,5 +601,57 @@ class CodeFactory {
 	public void generateStringAssignment(StringExpression stringLeftVal,
 			StringExpression stringExpr) {
 		
+	}
+
+	public void generateWhileEnd(String loopName, String properContinueName) {
+		System.out.println("\tjmp " + loopName + "\n");
+		System.out.println(properContinueName + ": ");
+	}
+
+	public ArrayList<String> generateWhile(Expression leftOp,
+			Expression rightOp, Operation op) {
+		String continueFunc = generateAssemFuncName("__continue");
+		String whileFunc = generateAssemFuncName("__while");
+		ArrayList<String> namesForThisWhile = new ArrayList<String>();
+		namesForThisWhile.add(whileFunc);
+		namesForThisWhile.add(continueFunc);
+		System.out.println("\n" + whileFunc + ":");
+		if (rightOp.expressionType == Expression.LITERALEXPR) {
+			System.out.println("\tmovl " + "$" + rightOp.expressionName + ", %ebx");
+		} 
+		else {
+			System.out.println("\tmovl " + rightOp.expressionName + ", %ebx");
+		}
+		if (leftOp.expressionType == Expression.LITERALEXPR) {
+			System.out.println("\tmovl " + "$" + leftOp.expressionName + ", %eax");
+		} 
+		else {
+			System.out.println("\tmovl " + leftOp.expressionName + ", %eax");
+		}
+		if(op.opType == Token.EQUAL){
+			System.out.println("\tcmpl %ebx, %eax");
+			System.out.println("\tjne " + continueFunc);
+		}
+		else if(op.opType == Token.NOTEQUAL){
+			System.out.println("\tcmpl %ebx, %eax");
+			System.out.println("\tje " + continueFunc);
+		}
+		else if(op.opType == Token.LESS){
+			System.out.println("\tcmpl %ebx, %eax");
+			System.out.println("\tjge " + continueFunc);
+		}
+		else if(op.opType == Token.LESSOREQ){
+			System.out.println("\tcmpl %ebx, %eax");
+			System.out.println("\tjg " + continueFunc);
+		}
+		else if(op.opType == Token.GREAT){
+			System.out.println("\tcmpl %ebx, %eax");
+			System.out.println("\tjle " + continueFunc);
+		}
+		else if(op.opType == Token.GREATOREQ){
+			System.out.println("\tcmpl %ebx, %eax");
+			System.out.println("\tjl " + continueFunc);
+		}
+		return namesForThisWhile;
 	}
 }

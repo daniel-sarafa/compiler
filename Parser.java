@@ -1,26 +1,42 @@
+import java.util.*;
 /*
  * 
  * Micro grammar
-<program>    -> #Start BEGIN <statement list> END
-<statement list> -> <statement> {<statement>}
-<statement>    -> int <ident>; | int <ident> := <expression>  | String <ident>; | String <ident> := <stringExpression>
-<statement>    -> <ident> := <expression> | <ident> := <stringExpression> #Assign;
-<statement>    -> READ (<id list>);
-<statement>    -> WRITE (<expr list>);
-<statement>    -> WRITE(<string list>);
-<id list>    -> <ident> #ReadId {, <ident> #ReadId}
-<expr list>    -> <expression> #WriteExpr {, <expression> #WriteExpr}
-<string list>      -> <stringExpression> {, <stringExpression> }
-<expression>    -> <primary> {<add op> <primary> #GenInfix};
+<program>          -> #Start BEGIN <statement list> END
+<statement list>  -> <statement> {<statement>}
+<statement>       -> int <ident>; | int <ident> := <expression>;
+<statement>       -> bool <ident>; | bool <ident> := <boolExpression>;
+<statement>       -> String <ident>; | String <ident> := <stringExpression>;
+<statement>       -> <ident> := <expression> | <ident> := <stringExpression> | <ident> := <boolExpression>; #Assign;
+<statement>       -> READ (<id list>);
+<statement>       -> WRITE (<expr list>);
+<statement>       -> WRITE(<boolExpr list>);
+<statement>       -> WRITE(<string list>);
+<statement>       -> <if> | <while>
+<id list>              -> <ident> #ReadId {, <ident> #ReadId}
+<expr list>      -> <expression> #WriteExpr {, <expression> #WriteExpr}
+<string list>         -> <string> {, <string> }
+<expression>      -> <factor> <addOp> <expression> | <factor>
+<factor>              -> <primary> <multOp> <factor> | <primary>
+<primary>           -> ( <expression> ) | <ident> 
+<primary>           -> IntLiteral
+<if>                      -> IF(<relativeExpr>) <statement list> ENDIF <else>
+<else>                 -> ELSE <statement list> ENDELSE | $ (blank) //no else statement
+<while>               -> WHILE(<relativeExpr>) <statement list> ENDWHILE
+<boolExpression> -> <andExpr> ? <boolExpression> | <andExpr>
+<andExpr>           -> <notExpr> & <andExpr> | <notExpr>
+<notExpr>            -> ! <boolPrimary> | <boolPrimary>
+<boolPrimary>    -> ( <boolExpression>) | <ident>
+<boolPrimary>    -> IntLiteral
 <stringExpression>     ->  <stringPrimary> {+ <stringPrimary> #GenInFix};
-<primary>    -> ( <expression> )
-<primary>    -> <ident>
-<stringPrimary>->  <ident>
-<primary>    -> IntLiteral
-<stringPrimary>-> StringLiteral
-<add op>    -> + #ProcessOp | - #ProcessOp
-<ident>    ->  a-z {a-z | 0-9 | specialCharacters} #ProcessId
-<system goal> -> <program> EofSym #Finish
+<stringPrimary>  ->  <ident>
+<stringPrimary>  -> StringLiteral
+<relativeExpr>    -> <expr> <relOp> <expr>
+<addOp>            -> + #ProcessOp | - #ProcessOp
+<multOp>           -> * | / | %
+<relOp>              -> == | != | > | < | >= | <=
+<ident>              ->  a-z {a-z | 0-9 | specialCharacters} #ProcessId
+<system goal>   -> <program> EofSym #Finish
 
  */
 
@@ -73,10 +89,8 @@ public class Parser
     
     private void statementList()
     {
-        while ( currentToken.getType() == Token.ID || currentToken.getType() == Token.READ || 
-                    currentToken.getType() == Token.WRITE || currentToken.getType() == Token.STRINGTYPE ||
-                    currentToken.getType() == Token.INTTYPE || currentToken.getType() == Token.BOOL)
-        {
+    	while(currentToken.getType() != Token.END && currentToken.getType() != Token.ENDIF &&
+    			currentToken.getType() != Token.ENDELSE && currentToken.getType() != Token.ENDWHILE){
             statement();
         }
     }
@@ -122,6 +136,9 @@ public class Parser
         	{
         		match(Token.INTTYPE);
         		lValue = identifier();
+        		if(symbolTable.checkSTforItem(lValue.expressionName)){
+        			alreadyDeclaredError(previousToken.getId());
+        		}
         		if(currentToken.getType() == Token.ASSIGNOP){
         			match(Token.ASSIGNOP);
         			expr = expression();
@@ -143,7 +160,7 @@ public class Parser
         		boolLeftVal = boolIdentifier();
         		if(currentToken.getType() == Token.ASSIGNOP){
         			match(Token.ASSIGNOP);
-        			expr = boolOrExpression();
+        			expr = logicalExpressionBegin();
         			symbolTable.addBoolItem(boolLeftVal, Integer.toString(expr.expressionIntValue));
         			codeFactory.generateBoolAssignment(boolLeftVal, expr);
         			match(Token.SEMICOLON);
@@ -156,12 +173,46 @@ public class Parser
         			break;
         		}
         	}
+        	case Token.IF : {
+        		match(Token.IF);
+        		match(Token.LPAREN);
+        		Expression result = relationalExpression();
+        		match(Token.RPAREN);
+        		if(result.expressionIntValue != 0){
+        			statementList();
+        			match(Token.ENDIF);
+        			elseStatement(false);
+        			break;
+        		}
+        		else {
+        			while(currentToken.getType() != Token.ENDIF){
+        				match(currentToken.getType()); //moves scanner to else part
+        			}
+        			match(Token.ENDIF);
+        			elseStatement(true);
+        			break;
+        		}
+        	}
+        	case Token.WHILE : {
+        		match(Token.WHILE);
+        		match(Token.LPAREN);
+        		ArrayList<String> whileNameForAssem = new ArrayList<String>();
+        		whileNameForAssem = relationalExpForWhile();
+        		match(Token.RPAREN);
+       			statementList();
+           		codeFactory.generateWhileEnd(whileNameForAssem.get(0), whileNameForAssem.get(1));
+        		match(Token.ENDWHILE);
+        		break;
+        	}
         	//declares and assigns strings as needed. also checks for errors.
         	//finds if the word "String" is present before a variable
         	case Token.STRINGTYPE: 
         	{
         		match(Token.STRINGTYPE);
         		stringLeftVal = stringIdentifier();
+        		if(symbolTable.checkSTforItem(stringLeftVal.stringExpressionName)){
+        			alreadyDeclaredError(stringLeftVal.stringExpressionName);
+        		}
         		if(currentToken.getType() == Token.ASSIGNOP){
         			match(Token.ASSIGNOP);
         			if(currentToken.getType() == Token.ID){
@@ -208,7 +259,7 @@ public class Parser
             		else if(symbolTable.getType(currentToken.getId()).equals("bool")){
             			boolLeftVal = boolIdentifier();
             			match(Token.ASSIGNOP);
-            			expr = boolOrExpression();
+            			expr = logicalExpressionBegin();
             			codeFactory.generateBoolAssignment(boolLeftVal, expr);
             			symbolTable.addValue(boolLeftVal.expressionName, Integer.toString(expr.expressionIntValue));
             			match(Token.SEMICOLON);
@@ -231,7 +282,101 @@ public class Parser
         }
     }
     
-    private Expression expression()
+	private ArrayList<String> relationalExpForWhile() {
+		ArrayList<String> names = new ArrayList<String>();
+		Expression result;
+		Expression leftOp;
+		Expression rightOp;
+		Operation op;
+		
+		result = factor();
+		if(currentToken.getType() == Token.EQUAL || currentToken.getType() == Token.NOTEQUAL ||
+				currentToken.getType() == Token.LESS || currentToken.getType() == Token.GREAT ||
+				currentToken.getType() == Token.LESSOREQ || currentToken.getType() == Token.GREATOREQ){
+			leftOp = result;
+			op = relOperation();
+			rightOp = expression();
+			names = codeFactory.generateWhile(leftOp, rightOp, op);
+		}
+		return names;
+	}
+
+	private void elseStatement(boolean elseIsRun) {
+		if(currentToken.getType() == Token.ELSE){
+			if(elseIsRun){
+				match(Token.ELSE);
+				statementList();
+				match(Token.ENDELSE);
+			}
+			else {
+				while(currentToken.getType() != Token.ENDELSE){
+					match(currentToken.getType());
+				}
+				match(Token.ENDELSE);
+			}
+		}
+		else { //no else statement
+			return;
+		}
+	}
+
+	private Expression relationalExpression() {
+		Expression result;
+		Expression leftOp;
+		Expression rightOp;
+		Operation op;
+		
+		result = logicalExpressionBegin();
+		if(currentToken.getType() == Token.EQUAL || currentToken.getType() == Token.NOTEQUAL ||
+				currentToken.getType() == Token.GREAT || currentToken.getType() == Token.GREATOREQ || 
+				currentToken.getType() == Token.LESS || currentToken.getType() == Token.LESSOREQ){
+    		leftOp = result;
+    		op = relOperation();
+    		rightOp = logicalExpressionBegin();
+    		result = codeFactory.generateArithExpr(leftOp, rightOp, op);
+		}
+		//makes sure no chained operations
+		
+		if(currentToken.getType() == Token.EQUAL || currentToken.getType() == Token.NOTEQUAL || currentToken.getType() == Token.GREAT || 
+			currentToken.getType() == Token.GREATOREQ || currentToken.getType() == Token.LESS || currentToken.getType() == Token.LESSOREQ){
+			chainedOpsError();
+		}
+		return result;
+	}
+
+	private Operation relOperation() {
+		Operation op = new Operation();
+		if(currentToken.getType() == Token.EQUAL){
+			match(Token.EQUAL);
+			op = processOperation();
+		}
+		else if(currentToken.getType() == Token.NOTEQUAL){
+			match(Token.NOTEQUAL);
+			op = processOperation();
+		}
+		else if(currentToken.getType() == Token.GREAT){
+			match(Token.GREAT);
+			op = processOperation();
+		}
+		else if(currentToken.getType() == Token.GREATOREQ){
+			match(Token.GREATOREQ);
+			op = processOperation();
+		}
+		else if(currentToken.getType() == Token.LESS){
+			match(Token.LESS);
+			op = processOperation();
+		}
+		else if(currentToken.getType() == Token.LESSOREQ){
+			match(Token.LESSOREQ);
+			op = processOperation();
+		}
+		else {
+			error(currentToken);
+		}
+		return op;
+	}
+
+	private Expression expression()
     {
         Expression result;
         Expression leftOperand;
@@ -257,7 +402,7 @@ public class Parser
 	}
 
     //
-	private Expression boolOrExpression() {
+	private Expression logicalExpressionBegin() {
     	Expression result;
     	Expression leftOperand;
     	Expression rightOperand;
@@ -267,9 +412,10 @@ public class Parser
     	while(currentToken.getType() == Token.AND){
     		leftOperand = result; 
     		op = andOp();
-    		rightOperand = boolOrExpression();
+    		rightOperand = logicalExpressionBegin();
     		result = codeFactory.generateBoolExpr(leftOperand, rightOperand, op);
     	}
+    	
     	return result;
     }
 
@@ -334,7 +480,7 @@ public class Parser
 		}
 		int type = currentToken.getType();
 		if(type == Token.PLUS || type == Token.MINUS || type == Token.DIV ||
-				type == Token.MULT || type == Token.MOD){
+			type == Token.MULT || type == Token.MOD){
 			typeMixingError(currentToken);
 		}
 		return result;
@@ -520,6 +666,9 @@ public class Parser
             	result = processLiteral();
             	break;
             }
+            case Token.STRING : {
+            	typesMixingError(currentToken);
+            }
             default: error( currentToken );
         }
         return result;
@@ -658,6 +807,12 @@ public class Parser
         else if ( previousToken.getType() == Token.NOT) op.opType = Token.NOT;
         else if ( previousToken.getType() == Token.AND) op.opType = Token.AND;
         else if ( previousToken.getType() == Token.OR) op.opType = Token.OR;
+        else if ( previousToken.getType() == Token.EQUAL) op.opType = Token.EQUAL;
+        else if ( previousToken.getType() == Token.NOTEQUAL) op.opType = Token.NOTEQUAL;
+        else if ( previousToken.getType() == Token.GREAT) op.opType = Token.GREAT;
+        else if ( previousToken.getType() == Token.GREATOREQ) op.opType = Token.GREATOREQ;
+        else if ( previousToken.getType() == Token.LESS) op.opType = Token.LESS;
+        else if ( previousToken.getType() == Token.LESSOREQ) op.opType = Token.LESSOREQ;
         else error( previousToken );
         return op;
     }
@@ -707,9 +862,19 @@ public class Parser
     	System.exit(0);
     }
     
+    private void alreadyDeclaredError(String id) {
+    	System.out.println("Error! Variable " + id + " has already been declared");
+    	System.exit(0);
+	}
+    
     //error if types are mixed.
     private void typeMixingError(Token currentToken) {
 		System.out.println("Error! Operation types are mixed.");
+		System.exit(0);
+    }
+    
+    private void typesMixingError(Token currentToken) {
+		System.out.println("Error! Data types are mixed. Cannot use a " + currentToken.toString().toLowerCase() + " here.");
 		System.exit(0);
     }
     
@@ -728,4 +893,10 @@ public class Parser
 		System.out.println("Divide by 0 error!");
 		System.exit(0);
 	}
+    
+    private void chainedOpsError() {
+		System.out.println("Error! Relational operators cannot be chained.");
+		System.exit(0);
+	}
+    
 }
