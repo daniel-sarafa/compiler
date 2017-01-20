@@ -233,7 +233,7 @@ public class Scanner
         else if(i <= 4 && currentLine.length() > 4 && currentLine.substring(0, 4).equals("CALL")){
         	tokenStr = "CALL";
         	tokenType = Token.CALL;
-        	i += 9;
+        	i += 4;
         } 
         else if (currentLine.charAt(i) == ':'  && i+1 < len && currentLine.charAt(i+1) == '=')
         {

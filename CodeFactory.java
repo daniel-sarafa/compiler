@@ -7,7 +7,6 @@ import java.util.ArrayList;
 class CodeFactory {
 	private static int tempCount;
 	public static SymbolTable variablesList;
-	public static ArrayList<SymbolTable> variablesListList;
 	public static int symCount;
 	private static int labelCount = 0;
 	private static boolean firstWrite = true;
@@ -15,15 +14,13 @@ class CodeFactory {
 	public CodeFactory() {
 		tempCount = 0;
 		variablesList = new SymbolTable();
-		variablesListList = new ArrayList<SymbolTable>();
 		symCount = 0;
 	}
 
 	//sets variables list equal to symbol table each time a 
 	//new symbol is added
 	void generateDeclaration() {
-		variablesList = Parser.scopes.get(Parser.scopeNum);
-		variablesListList.add(symCount++, variablesList);
+		variablesList = Parser.symbolTable;
 	}
 
 	Expression generateArithExpr(Expression left, Expression right, Operation op) {
@@ -396,7 +393,7 @@ class CodeFactory {
 
 	}
 
-	private String generateLabel(String start) {
+	public String generateLabel(String start) {
 		String label = start + labelCount++;
 		return label;
 	}
@@ -414,26 +411,22 @@ class CodeFactory {
 
 	public void generateData() {
 		System.out.println("\n\n.data");
-		int i = 0;
 		int j = 0;
-		while(i < variablesListList.size()){
-			while(j < variablesListList.get(i).getSize()){
-				if(variablesListList.get(i).getType(j).equals("string")){
-					if(variablesListList.get(i).getValue(variablesList.getItem(j)).equals("")){
-						System.out.println(variablesListList.get(i).getItem(j) + ": .zero 256");
+			while(j < variablesList.getSize()){
+				if(variablesList.getType(j).equals("string")){
+					if(variablesList.getValue(variablesList.getItem(j)).equals("")){
+						System.out.println(variablesList.getItem(j) + ": .zero 256");
 					}
 					else {
-						System.out.println(variablesListList.get(i).getItem(j) + ":\t ." + variablesListList.get(i).getType(i) + " \"" + variablesListList.get(i).getValue(variablesListList.get(i).getItem(j)) + "\"");
-						System.out.println(".equ " + variablesList.getItem(i) + "Len, . - " + variablesList.getItem(i) + "\n");
+						System.out.println(variablesList.getItem(j) + ":\t ." + variablesList.getType(j) + " \"" + variablesList.getValue(variablesList.getItem(j)) + "\"");
+						System.out.println(".equ " + variablesList.getItem(j) + "Len, . - " + variablesList.getItem(j) + "\n");
 					}
 				}
 				else {
-					System.out.println(variablesListList.get(i).getItem(j) + ":\t ." + "int" + " " + variablesListList.get(i).getValue(variablesListList.get(i).getItem(j)));
+					System.out.println(variablesList.getItem(j) + ":\t ." + "int" + " " + variablesList.getValue(variablesList.getItem(j)));
 				}
 				j++;
 			}
-			i++;
-		}
 		System.out.println("__minus:  .byte '-'");
 		System.out.println("__negOne: .int -1");
 		System.out.println("__negFlag: .byte '+'");
@@ -678,5 +671,18 @@ class CodeFactory {
 			System.out.println("\tjl " + continueFunc);
 		}
 		return namesForThisWhile;
+	}
+
+	public String generateProc(String proc) {
+		System.out.println("generated proc");
+		return null;
+	}
+
+	public void generateProcEnd(String continueRet) {
+		System.out.println("generated end proc");
+	}
+
+	public void generateProcCall(String proc) {
+		System.out.println("generated call");
 	}
 }

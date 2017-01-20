@@ -26,6 +26,13 @@ class SymbolTable
         types.add("int");
         values.add("0");
     }
+    
+    public void addProc(Token token){
+    	st.add("_" + token.getId());
+    	types.add("proc");
+    	values.add("0");
+    }
+    
     public void addIntItem(Expression exp, String value)
     {
         st.add( exp.expressionName );
