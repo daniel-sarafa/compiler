@@ -422,8 +422,9 @@ class CodeFactory {
 						System.out.println(".equ " + variablesList.getItem(j) + "Len, . - " + variablesList.getItem(j) + "\n");
 					}
 				}
-				else {
+				else if(variablesList.getType(j).equals("int")){
 					System.out.println(variablesList.getItem(j) + ":\t ." + "int" + " " + variablesList.getValue(variablesList.getItem(j)));
+
 				}
 				j++;
 			}
@@ -674,15 +675,30 @@ class CodeFactory {
 	}
 
 	public String generateProc(String proc) {
-		System.out.println("generated proc");
-		return null;
+		String continueName = generateAssemFuncName("__continue");
+		System.out.println("\tjmp " + continueName);
+		
+		System.out.println(proc + ":");
+		System.out.println("\tpushl %eax");
+		System.out.println("\tpushl %ebx");
+		System.out.println("\tpushl %ecx");
+		System.out.println("\tpushl %edx");
+		
+		return continueName;
 	}
 
 	public void generateProcEnd(String continueRet) {
-		System.out.println("generated end proc");
+		System.out.println("\tpopl %edx");
+		System.out.println("\tpopl %ecx");
+		System.out.println("\tpopl %ebx");
+		System.out.println("\tpopl %eax");
+		
+		System.out.println("\tret\n");
+		
+		System.out.println(continueRet + ": ");
 	}
 
 	public void generateProcCall(String proc) {
-		System.out.println("generated call");
+		System.out.println("\tcall " + proc);
 	}
 }

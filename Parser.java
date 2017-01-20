@@ -240,8 +240,8 @@ public class Parser
         		break;
         	}
         	
-        	case Token.PROC : {
-        		match(Token.PROC);
+        	case Token.BEGINPROC : {
+        		match(Token.BEGINPROC);
         		match(Token.ID);
         		String proc = "";
         		if(scopes.isEmpty()){
@@ -255,7 +255,10 @@ public class Parser
         			}
         		}
         		else {
-        			proc = scopes.get(scopes.size() - 1);
+        			proc = scopes.get(scopes.size() - 1); 
+        			//if scopes is not empty, that means the code is currently
+        			//operating in the latest added scope, which is what the
+        			//above line sets proc equal to.
         			if(!symbolTable.checkSTforItem(proc + "_" + previousToken.getId() )){
         				proc = proc + "_" + previousToken.getId();
         				scopes.add(proc);
@@ -269,8 +272,15 @@ public class Parser
         		match(Token.RPAREN);
         		String continueRet = codeFactory.generateProc(proc);
         		statementList();
+        		if(currentToken.getType() == Token.END){
+        			System.out.println("Error. BEGINPROC seen without ENDPROC" +
+        					" before end of file.");
+        			System.exit(0);
+        		}
         		match(Token.ENDPROC);
         		scopes.remove(scopes.size()-1);
+        		//removes the latest scope, as it will now be replaced
+        		//with another because it is finished. 
         		codeFactory.generateProcEnd(continueRet);
         		break;
         	}
@@ -367,22 +377,16 @@ public class Parser
     
 
     private String findScope(String check) {
-		String name = check;
+		int i = 0;
 		if(!scopes.isEmpty()){
-			int i = scopes.size() -1;
-			while(i >= 0){
+			while(i < scopes.size()){
 				if(symbolTable.checkSTforItem(scopes.get(i) + check)){
-					name = scopes.get(i) + check;
+					check = scopes.get(i) + check;
 				}
-				i--;
+				i++;
 			}
 		}
-		return name;
-	}
-
-	private void funcDecError(String id) {
-		System.out.println("Error. Function " + id + " has already been declared.");
-		System.exit(0);
+		return check;
 	}
 
 	private ArrayList<String> relationalExpForWhile() {
@@ -991,7 +995,7 @@ public class Parser
 	//error for not declaring variables properly.
     //exits so assembly code does not print after an error.
     private void declarationError(String id) {
-		System.out.println("Error! Variable " + id + " has not been declared.");
+		System.out.println("Error! Variable " + id + " has not been declared or is being used out of scope.");
 		System.exit(0);
 	}
     
@@ -1021,8 +1025,12 @@ public class Parser
 	//added exit so no more assembly code gets printed after an error.
     private void error( Token token )
     {
-        System.out.println( "Syntax error! Parsing token " + token.getId() + " at line number " + 
-                scanner.getLineNumber() );
+    	if(token.getType() == Token.ENDPROC){
+    		System.out.println("Error. ENDPROC without BEGINPROC.");
+    		System.exit(0);
+    	}
+    	System.out.println( "Syntax error! Parsing token " + token.getId() + " at line number " + 
+            scanner.getLineNumber() );
         if (token.getType() == Token.ID )
             System.out.println( "ID name: " + token.getId() );
         System.exit(0);
@@ -1035,7 +1043,7 @@ public class Parser
 	}
     
     private void funcCallError(String id) {
-		System.out.println("Error. Calls to a function" + previousToken.getId() + "that is out of score");
+		System.out.println("Error. Calls to a procedure " + previousToken.getId() + " that is out of scope or undefined.");
 		System.exit(0);
 	}
     
@@ -1047,6 +1055,11 @@ public class Parser
     private void undefinedError(String id) {
     	System.out.println("Error. Variable " + id + " has not been defined.");
     	System.exit(0);
+	}
+    
+    private void funcDecError(String id) {
+		System.out.println("Error. Function " + id + " has already been declared.");
+		System.exit(0);
 	}
     
 }

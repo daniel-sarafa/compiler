@@ -44,7 +44,7 @@ public class Token
 	public final static int ENDELSE = 36;
 	public final static int WHILE = 37;
 	public final static int ENDWHILE = 38;
-	public final static int PROC = 39;
+	public final static int BEGINPROC = 39;
 	public final static int ENDPROC = 40;
 	public final static int CALL = 41;
 	
@@ -70,7 +70,7 @@ public class Token
             else if ( temp.compareTo("endelse") == 0) type = ENDELSE;
             else if ( temp.compareTo("while") == 0) type = WHILE;
             else if ( temp.compareTo("endwhile") == 0) type = ENDWHILE;
-            else if ( temp.compareTo("beginproc") == 0) type = PROC;
+            else if ( temp.compareTo("beginproc") == 0) type = BEGINPROC;
             else if ( temp.compareTo("endproc") == 0) type = ENDPROC;
             else if ( temp.compareTo("call") == 0) type = CALL;
 
@@ -127,7 +127,7 @@ public class Token
             case ENDELSE : str = "ENDELSE"; break;
             case WHILE : str = "WHILE"; break;
             case ENDWHILE : str = "ENDWHILE"; break;
-            case PROC : str = "PROC"; break;
+            case BEGINPROC : str = "BEGINPROC"; break;
             case ENDPROC : str = "ENDPROC"; break;
             case CALL : str = "CALL"; break;
             default: str = "Lexical Error";

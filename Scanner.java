@@ -222,7 +222,7 @@ public class Scanner
         } 
         else if( i <= 9 && currentLine.length() > 9 && currentLine.substring(0, 9).equals("BEGINPROC")){
         	tokenStr = "BEGINPROC";
-        	tokenType = Token.PROC;
+        	tokenType = Token.BEGINPROC;
         	i += 9;
         } 
         else if( i <= 7 && currentLine.length() > 7 && currentLine.substring(0, 7).equals("ENDPROC")){
